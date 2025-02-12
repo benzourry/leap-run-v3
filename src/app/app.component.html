@@ -1,0 +1,54 @@
+@if (appLoading) {
+  <div class="p-5 text-centered">
+    <div class="lds-ellipsis">
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+  </div>
+}
+@if (!appLoading) {
+  @if (updateAvailable) {
+    <div style="background:red;padding:1em; color: white; font-size: .9em" (click)="reload()">
+      Update available! Click this message to update
+    </div>
+  }
+  @if (offline) {
+    <div style="background:red;padding:1em; color: white; font-size: .9em">
+      You are currently offline. Data might be outdated and some of the feature will be disabled.
+    </div>
+  }
+  @if (!serverDown) {
+    @if (!pathExist) {
+      <div class="text-centered">
+        <div class="pt-5 text-muted">
+          <fa-icon [icon]="['fas','exclamation-triangle']" [fixedWidth]="true" size="5x"></fa-icon>
+        </div>
+        <div class="p-5 text-danger">
+          <h3>App with path <strong>{{path}}</strong> doesn't exist</h3>
+        </div>
+      </div>
+    }
+    @if (pathExist) {
+      <router-outlet></router-outlet>
+    }
+  } @else {
+    <div class="text-centered">
+      <div class="pt-5 text-muted">
+        <fa-icon [icon]="['fas','exclamation-triangle']" [fixedWidth]="true" size="5x"></fa-icon>
+      </div>
+      <div class="p-5 text-danger">
+        <h3>Service is currently not available</h3>
+        <p>Sorry for the inconvenience but we&rsquo;re performing some maintenance at the moment.
+        We&rsquo;ll be back online shortly!</p>
+      </div>
+    </div>
+  }
+}
+<app-toasts aria-live="polite" aria-atomic="true"></app-toasts>
+<!-- <div class="limit-width m-a"><ng-container *ngFor="let c of itemIcons">
+<fa-icon [icon]="getIcon(c)" size="2x" [fixedWidth]="true">
+</fa-icon>
+</ng-container>
+</div> -->
