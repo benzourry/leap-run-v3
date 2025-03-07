@@ -61,11 +61,11 @@ import { GroupByPipe } from '../../_shared/pipe/group-by.pipe';
     styleUrls: ['./list.component.css'],
     providers: [{ provide: NgbDateAdapter, useClass: NgbUnixTimestampAdapter },
         { provide: NgbTimeAdapter, useClass: NgbUnixTimestampTimeAdapter }],
-    imports: [PageTitleComponent, NgbTooltip, FaIconComponent, RouterLink, FormsModule, NgbDropdown, NgbDropdownToggle,
-        NgbDropdownMenu, NgbDropdownItem, NgbDropdownButtonItem, NgClass, FieldViewComponent, StepWizardComponent,
-        NgbPagination, NgbPaginationFirst, NgbPaginationPrevious, NgbPaginationNext, NgbPaginationLast, UserEntryFilterComponent, AngularEditorModule, 
-        forwardRef(() => FormComponent), forwardRef(() => ViewComponent), forwardRef(() => ScreenComponent),
-        SafePipe, KeyValuePipe]
+    imports: [PageTitleComponent, NgbTooltip, FaIconComponent, FormsModule, NgbDropdown, NgbDropdownToggle,
+    NgbDropdownMenu, NgbDropdownItem, NgbDropdownButtonItem, NgClass, FieldViewComponent, StepWizardComponent,
+    NgbPagination, NgbPaginationFirst, NgbPaginationPrevious, NgbPaginationNext, NgbPaginationLast, UserEntryFilterComponent, AngularEditorModule,
+    forwardRef(() => FormComponent), forwardRef(() => ViewComponent), forwardRef(() => ScreenComponent), JsonPipe,
+    SafePipe, KeyValuePipe]
 })
 export class ListComponent implements OnInit, OnChanges {
 
@@ -397,6 +397,7 @@ export class ListComponent implements OnInit, OnChanges {
     // this.loc.go(this.loc.path().split("?")[0], "page=" + pageNumber);
   }
 
+  entryIndex:any={};
   rowClass:any={};
   searchTextEncoded: string = "";
   // last: boolean; first: boolean; 
@@ -431,21 +432,24 @@ export class ListComponent implements OnInit, OnChanges {
       size: this.pageSize
     }
 
+    // reason da benda tok, knak??? Sbb utk support $conf$, mn ada akan set as parameter
+    // utk handle $conf$, if ada $conf$, override dengan value dari frontend
     if (this.dataset.presetFilters){
-      Object.keys(this.dataset.presetFilters).forEach(k=>{
-        params[k] = compileTpl(this.dataset.presetFilters[k]??'', { $user$: this.user, $conf$:this.runService.appConfig, $: {}, $_: {}, $prev$: {}, $base$: this.base, $baseUrl$: this.baseUrl, $baseApi$: this.baseApi, $this$: this.$this$, $param$: this._param })
+      Object.keys(this.dataset.presetFilters)
+      .filter(k=>(this.dataset.presetFilters[k]+"").includes("$conf$"))
+      .forEach(k=>{
+          params[k] = compileTpl(this.dataset.presetFilters[k]??'', { $user$: this.user, $conf$:this.runService.appConfig, $: {}, $_: {}, $prev$: {}, $base$: this.base, $baseUrl$: this.baseUrl, $baseApi$: this.baseApi, $this$: this.$this$, $param$: this._param })
       })
     }
 
 
     params = Object.assign(params, this._pre({},this.dataset.x?.initParam, false));
+
     if (this.sort) {
       params['sorts'] = this.sort;
     }
     params['@cond'] = this.filtersCond;
-    // if (this.dataset.defaultSort) {
-    //   params['sort'] = this.dataset.defaultSort
-    // }
+
     if (this.dataset?.id) {
       this.entryService.getListByDataset(this.dataset.id, params)
         .subscribe({
@@ -463,7 +467,8 @@ export class ListComponent implements OnInit, OnChanges {
               this.changed.emit(res);
             }catch(e){}
 
-            this.entryList.forEach(e=>{
+            this.entryList.forEach((e,index)=>{
+              this.entryIndex[e.id]=index;
               this.rowClass[e.id]=compileTpl(this.dataset?.x?.rowClass??'', { $user$: this.user, $conf$:this.runService.appConfig, $: e?.data, $_: e, $prev$: e?.prev, $base$: this.base, $baseUrl$: this.baseUrl, $baseApi$: this.baseApi, $this$: this.$this$, $param$: this._param })
             })
 
@@ -921,7 +926,10 @@ export class ListComponent implements OnInit, OnChanges {
   updateField = (entryId, value, callback, error) => {
     return lastValueFrom(this.entryService.updateField(entryId, value, this.dataset?.appId)
       .pipe(
-        tap({ next: callback, error: error }), first()
+        tap({ next: callback, error: error }),
+        tap(() => {
+          this.getEntryList(this.pageNumber); 
+        }), first()
       ));
   }
 

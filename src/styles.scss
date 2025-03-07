@@ -11,11 +11,11 @@
 // @import "@fullcalendar/daygrid/main.css";
 // @import "@fullcalendar/timegrid/main.css";
 // @import 'prismjs/themes/prism.css';
-$enable-negative-margins:true !default;
+@use "bootstrap/scss/bootstrap.scss";
+@use "assets/css/print.css";
+@use "leaflet/dist/leaflet.css";
 
-@import "bootstrap/scss/bootstrap.scss";
-@import url(assets/css/print.css);
-@import "leaflet/dist/leaflet.css";
+$enable-negative-margins:true !default;
 
 html,
 body {

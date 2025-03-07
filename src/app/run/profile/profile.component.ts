@@ -15,17 +15,16 @@
 // You should have received a copy of the GNU General Public License
 // along with LEAP.  If not, see <http://www.gnu.org/licenses/>.
 
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, effect } from '@angular/core';
 import { UserService } from '../../_shared/service/user.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ToastService } from '../../_shared/service/toast-service';
 // import { RunService } from '../../service/run.service';
 import { ActivatedRoute } from '@angular/router';
 // import { domainRegex } from '../_shared/constant.service';
-import { combineLatest } from 'rxjs';
 import { SwPush } from '@angular/service-worker';
 import { PushService } from '../../_shared/service/push.service';
-import { take, withLatestFrom } from 'rxjs/operators';
+import { take } from 'rxjs/operators';
 import { DatePipe, KeyValuePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -56,7 +55,6 @@ export class ProfileComponent implements OnInit {
     local: ['far', 'envelope'],
     undetermine: ['fas', 'question']
   }
-  
   constructor(private userService: UserService,
     public runService: RunService, private swPush: SwPush, private pushService: PushService,
     private modalService: NgbModal, private toastService: ToastService,
@@ -72,17 +70,7 @@ export class ProfileComponent implements OnInit {
     this.userService.getUser()
       .subscribe(user => {
         this.user = user;
-
-        // this.route.url.pipe(
-        //   withLatestFrom(this.route.parent.params, this.route.params)
-        // ).subscribe(([url, p, c]) => {
-        //   var appId = p.appId || c.appId;
-        // this.app = this.runService.app;
-        // this.appId = this.runService.appId;
-        // if (this.appId) {
-          this.loadNotif(this.app?.id, this.user.email);
-        // }
-        // });
+        this.loadNotif(this.app?.id, this.user.email);
         this.loadSubscription();
       });
 
@@ -99,7 +87,7 @@ export class ProfileComponent implements OnInit {
     history.pushState(null, null, window.location.href);
     this.modalService.open(tpl, { backdrop: 'static' })
       .result.then(res => {
-        this.runService.markNotification(res.id, this.user?.email)
+        this.runService.markNotification(res.id, this.user.email)
           .subscribe({
             next: (res2) => {
               this.loadNotif(this.app?.id, this.user.email);
@@ -131,7 +119,7 @@ export class ProfileComponent implements OnInit {
   }
 
   removeAcc() {
-    this.runService.removeAcc(this.app?.id, this.user.email)
+    this.runService.removeAcc(-1, this.user.email)
       .subscribe(user => {
         this.toastService.show("Your account has been successfully removed", { classname: 'bg-success text-light' });
         this.logout();
