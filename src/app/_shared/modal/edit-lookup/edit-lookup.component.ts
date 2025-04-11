@@ -1,12 +1,12 @@
-import { KeyValuePipe } from '@angular/common';
 import { Component, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbInputDatepicker } from '@ng-bootstrap/ng-bootstrap';
+// import { NgbInputDatepicker } from '@ng-bootstrap/ng-bootstrap';
+import { NgSelectModule } from '@ng-select/ng-select';
 
 @Component({
     selector: 'app-edit-lookup',
-    imports: [FormsModule, FaIconComponent, KeyValuePipe, NgbInputDatepicker],
+    imports: [FormsModule, FaIconComponent, NgSelectModule],
     templateUrl: './edit-lookup.component.html',
     styleUrl: './edit-lookup.component.scss'
 })

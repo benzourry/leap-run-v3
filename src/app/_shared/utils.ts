@@ -1,209 +1,149 @@
 import { formatNumber } from '@angular/common';
 import { baseApi } from './constant.service';
 import dayjs from 'dayjs';
-import {marked} from 'marked';
+import { marked } from 'marked';
 import mermaid from 'mermaid';
-// import mermaid from "mermaid";
 
+const svgCache: Record<string, string> = {};
+const tplCache: Record<number, string> = {};
 
-var svgCache:any={}
+const hashCode = (s: string): number =>
+  s.split('').reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0);
+
 marked.use({
-extensions: [{
+  extensions: [{
     name: 'code',
-    renderer({lang, raw, text}) {
-    if (lang=='mermaid') {
-      let id = 'mermaid_'+Math.abs(hashCode(text));
-      // LATER EXPERIMENT WITH DIRECT SVG GENERATION
-      if (!svgCache[id]){
-        svgCache[id]=`<div class="spinner-grow text-primary" role="status"><span class="visually-hidden">Loading...</span></div>`;
-        createMermaidSvg(id,text.replaceAll("\\n","\n")).then(svg=>{
-          if (svg){
-            var elem = document.getElementById(id);
-            elem.innerHTML=svg;
-            svgCache[id]=svg;              
-          }
-        })
+    renderer: ({ lang, text }) => {
+      if (lang === 'mermaid') {
+        const id = `mermaid_${Math.abs(hashCode(text))}`;
+        if (!svgCache[id]) {
+          svgCache[id] = `<div class="spinner-grow text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                          </div>`;
+          createMermaidSvg(id, text.replaceAll("\\n", "\n")).then(svg => {
+            const elem = document.getElementById(id);
+            if (elem) elem.innerHTML = svg;
+            svgCache[id] = svg;
+          });
+        }
+        return `<pre id="${id}" class="mermaid" data-processed="true">${svgCache[id] ?? text}</pre>`;
       }
-      return `<pre id="${id}" class="mermaid" data-processed="true">${svgCache[id]??text}</pre>`;
-    } else {
       return `<pre><code>${text}</code></pre>`;
     }
-  }
   }]
-})
+});
 
-var hashCode = function (s) {
-  var h = 0, i = s.length;
-  while (i > 0) {
-    h = (h << 5) - h + s.charCodeAt(--i) | 0;
-  }
-  return h;
+const multiReplace = (text: string, map: Record<string, string>): string => {
+  const reg = new RegExp(Object.keys(map).join("|"), "g");
+  return text.replace(reg, m => map[m]);
 };
 
-var tplCache: any = {}
-export function multiReplace(text, correction) {
-  // convert object keys to key1_|key2_|key3_
-  const reg = new RegExp(Object.keys(correction).join("|"), "g");
-  return (text+"")?.replace(reg, (matched) => correction[matched]);
-}
-const tag2sym = { table: 'table_', tr: 'tr_', td: 'td_', th: 'th_', tbody: 'tbody_', thead: 'thead_', src:'src_' }
-const sym2tag = { table_: 'table', tr_: 'tr', td_: 'td', th_: 'th', tbody_: 'tbody', thead_: 'thead', src_:'src' }
+const tag2sym = { table: 'table_', tr: 'tr_', td: 'td_', th: 'th_', tbody: 'tbody_', thead: 'thead_', src:'src_' };
+const sym2tag = { table_: 'table', tr_: 'tr', td_: 'td', th_: 'th', tbody_: 'tbody', thead_: 'thead', src_:'src' };
 
-export function compileTpl(templateText, data) {
+export function compileTpl(templateText: string, data: any): string {
+  const tplHash = hashCode(templateText);
+  let code = tplCache[tplHash];
 
-  let code = "";
-  let tplHashCode = hashCode(templateText);
-  // let templateText = rawTpl;
-  if (tplCache[tplHashCode]) {
-    code = tplCache[tplHashCode];
-  } else {
-    /// NEW Support for x-foreach and x-if as attributes
-    /// Problem with current <x-foreach> with table because of parseFromString
-    try {
-      // use createElement allow styles
-      // var doc: Document = new DOMParser().parseFromString(templateText, 'text/html');
-      // problem mun dlm x-if da table fulltpl (xda tbody) fail utk replace oritag (ada tbody sbb querySelector) so, maintain code lamak n xpa
-      // var fulltpl = templateText;
-      // replace sensitive tag such as table, etc to prevent doc refactoring
-      let fulltpl = multiReplace(templateText, tag2sym);
-      // let fulltpl = templateText.replace(/table|tr|td|th|tbody|thead/gi, m=>replacement[m])
-
-      let doc: HTMLElement = document.createElement("x-template"); 
-      // need root element to use querySelector, use noscript to prevent image being loaded
-      // revert back to x-template because noscript issue with inline x-foreach, x-for and x-if
-      doc.innerHTML = fulltpl;
-
-      let fn = function (doc, xscpl) {
-        let elems = doc.querySelectorAll(`[${xscpl}]`);
-        elems.forEach(e => {
-          let oritag = e.outerHTML; // original tag with attributes
-          let scpl = e.getAttribute(xscpl);
-          e.removeAttribute(xscpl);
-          fulltpl = fulltpl.replace(oritag, `<!--##--${xscpl} $="${scpl}"!--##-->${e.outerHTML}<!--##--/${xscpl}!--##-->`);
-        })
-      }
-      fn(doc, 'x-foreach');
-      fn(doc, 'x-for');
-      fn(doc, 'x-if');
-
-      templateText = multiReplace(fulltpl.replace(/!--##--/gi, ""), sym2tag);
-
-    } catch (err) {
-      console.log(err);
-    }
-    //// END
-
-    code = ("Object.assign(this,data);var output=" +
-      (JSON.stringify(templateText) || templateText)
-        .replace(/\<\!\-\-(.+?)\-\-\>/g, '') // remove <!-- -->
-        .replace(/\{\{(.+?)\}\}/g, r$val) // replace {{}}
-        .replace(/\[\#(.+?)\#\]/g, r$script) // replace [##]
-        .replace(/<x-if\s*\$=\\\"(.+?)\\\"\s*>/ig, '";if($1){\noutput+="') // replace <x-if x="true">
+  if (!code) {
+    let fullTpl = multiReplace(templateText, tag2sym);
+    const doc = document.createElement("x-template");
+    doc.innerHTML = fullTpl;
+    ['x-foreach', 'x-for', 'x-if'].forEach(attr => {
+      doc.querySelectorAll(`[${attr}]`).forEach(e => {
+        const val = e.getAttribute(attr);
+        fullTpl = fullTpl.replace(e.outerHTML,
+          `<!--##--${attr} $="${val}"!--##-->${e.outerHTML}<!--##--/${attr}!--##-->`);
+      });
+    });
+    templateText = multiReplace(fullTpl.replace(/!--##--/gi, ""), sym2tag);
+    code = (
+      "Object.assign(this, data);var output=" +
+      JSON.stringify(templateText)
+        .replace(/<!--(.+?)-->/g, '')
+        .replace(/\{\{(.+?)\}\}/g, r$val)
+        .replace(/\[#(.+?)#\]/g, r$script)
+        .replace(/<x-if\s*\$=\\\"(.+?)\\\"\s*>/ig, '";if($1){\noutput+="')
         .replace(/<x-else\s*\/?\s*>/ig, '";}else{\noutput+="')
         .replace(/<x-else-if\s*\$=\\\"(.+?)\\\"\s*\/?\s*>/ig, '";}else if($1){\noutput+="')
         .replace(/<\/x-if>/ig, '";}\noutput+="')
-        .replace(/<x-for\s*\$\=\\\"(.+?)\\\"\s*>/ig, '";for($1){\noutput+="') // replace <x-for x="i=0;i<5;i++">
+        .replace(/<x-for\s*\$\=\\\"(.+?)\\\"\s*>/ig, '";for($1){\noutput+="')
         .replace(/<\/x-for>/ig, '";}\noutput+="')
-        .replace(/<x-foreach\s*\$=\\\"(.+?)\\\"\s*>/ig, r$foreach) // replace <x-foreach x="i of list">
+        .replace(/<x-foreach\s*\$\=\\\"(.+?)\\\"\s*>/ig, r$foreach)
         .replace(/<\/x-foreach>/ig, '";})\noutput+="')
-        // .replace(/<x-markdown>(.+?)<\/x-markdown>/ig, r$markdown) 
-        .replace(/\<\?(.+?)\?\>/g, '";$1\noutput+="')+ //replace <??>
-      ";return output;")
-      .replace(/(?:^|<\/x-markdown>)[^]*?(?:<x-markdown>|$)/g, function(m) {
-        return m.replace(/(?:\\[rnt])+/gm, ""); // replace newline except within x-markdown
-      });
-    tplCache[tplHashCode] = code;
+        .replace(/<\?(.+?)\?>/g, '";$1\noutput+="')
+      + ";return output;"
+    ).replace(/(?:^|<\/x-markdown>)[\s\S]*?(?:<x-markdown>|$)/g, m => m.replace(/(?:\\[rnt])+/gm, ""));
+    tplCache[tplHash] = code;
   }
 
   if (templateText && data) {
     data.dayjs = dayjs;
     let result = "";
     try {
-      result = new Function(
-        "data", "get", "formatNumber", code)(data, get, formatNumber);
-
-      result = (result+"")
-              .replaceAll("\n","\\n") // no newline or next replace not working
-              .replace(/<x-markdown>(.+?)<\/x-markdown>/ig, r$markdown) // process markdown only after all binding has been processed
-              .replaceAll("\\n","\n") // reconvert \\n to \n
-
+      result = new Function("data", "get", "formatNumber", code)(data, get, formatNumber);
+      result = result.replaceAll("\n", "\\n")
+                     .replace(/<x-markdown>(.+?)<\/x-markdown>/ig, r$markdown)
+                     .replaceAll("\\n", "\n");
     } catch (err) {
       throw err;
     }
     return result;
-  } else {
-    return templateText;
   }
+  return templateText;
 }
 
-function r$markdown(match,p1){
-  // first replace <newline> -> \n utk parse. Lepas ya \n -> <newline>
-  return marked.parse(p1.replaceAll("\\n","\n")).toString().trim()
-  .replace('<table>', '<table class="table table-bordered m-0">')
-  .replace('<blockquote>', '<blockquote class="blockquote">')
-  // let parsed = marked.parse(p1.replaceAll("\\n","\n")).toString().replaceAll("\n","\\n").toString().trim(); 
+function r$markdown(match: string, p1: string): string {
+  return marked.parse(p1.replaceAll("\\n", "\n")).toString().trim()
+         .replace('<table>', '<table class="table table-bordered m-0">')
+         .replace('<blockquote>', '<blockquote class="blockquote">');
 }
 
-async function createMermaidSvg(id, text){
-  let svg = null;
-  if (await mermaid.parse(text, {suppressErrors:true})) {
-    let elem = document.createElement("div");
+async function createMermaidSvg(id: string, text: string): Promise<string> {
+  if (await mermaid.parse(text, { suppressErrors: true })) {
+    const elem = document.createElement("div");
     document.body.appendChild(elem);
-    elem.id = id+"_svg";
-    svg = (await mermaid.render(elem.id,text)).svg;
-  }else{
-    svg = new Promise(resolve=>resolve(`<div class="text-danger">Invalid <strong>Mermaid</strong> syntax</div>`));
-    console.log("#####Mermaid syntax Error")
-  } 
-  return svg;
+    elem.id = `${id}_svg`;
+    const { svg } = await mermaid.render(elem.id, text);
+    return svg;
+  }
+  console.error("Mermaid syntax error");
+  return `<div class="text-danger">Invalid <strong>Mermaid</strong> syntax</div>`;
 }
 
-function r$foreach(match, p1) {
-  // x-foreach="let a of list|filter:a.name=='sad'"
-  // let inside = match.replace(/<x-foreach x=\\\"/ig, '').replace(/\\\">/ig,'');
-  let part = p1.split(" of ");
-  return `";${part[1].trim()} && ${part[1].trim()}?.forEach(function(${part[0].trim()},$index){\noutput+="`;
+function r$foreach(match: string, p1: string): string {
+  const [iterator, list] = p1.split(" of ").map(s => s.trim());
+  return `";${list} && Array.isArray(${list}) && ${list}.forEach(function(${iterator}, $index){\noutput+="`;
 }
-function r$script(match, p1) {
-  // match.replace(/\[#|#\]/ig,''). 
-  return `";${p1.replace(/&nbsp;/ig, '')}\noutput+="`
+
+function r$script(match: string, p1: string): string {
+  return `";${p1.replace(/&nbsp;/ig, '')}\noutput+="`;
 }
-// Masalah mn run async operation dlm compileTpl, result akan update tpl n akan retrigger async, thus infinite retrigger
-// function r$include(match, p1) {
-//   let part = p1.split(" of ");
-//   return `";fetch("${part[1].trim()}").then((${part[0].trim()})=>{\noutput+="`;
-//   // return `";${part[1].trim()} && ${part[1].trim()}?.forEach(function(${part[0].trim()},$index){\noutput+="`;
-// }
-function r$val(match, p1, p2, p3, offset, string) {
-  let aVal = "";
+
+function r$val(match: string, p1: string): string {
   p1 = p1.replace(/\\"/g, '"');
-  let regex = /(['"].*?["']|[^"|:\s]+)(?=\s*|:\s*$)/ig;
-  let splitted = p1.match(regex);
-  // "+get(function(){return      },"")+"
-  if (splitted.length > 1) {
-    switch (splitted[1]) {
+  const parts = p1.match(/(['"].*?["']|[^"|:\s]+)/g) || [];
+  let aVal = "";
+  if (parts.length > 1) {
+    switch (parts[1]) {
       case 'date':
-        aVal = key('(new Date(' + splitted[0] + ')).toDateString()');//.toUTCString();
-        if (splitted[2]) {
-          aVal = key(`dayjs(new Date(${splitted[0]})).format(${splitted[2]})`);
-        }
+        aVal = key(`(new Date(${parts[0]})).toDateString()`);
+        if (parts[2]) aVal = key(`dayjs(new Date(${parts[0]})).format(${parts[2]})`);
         break;
       case 'imgSrc':
-      case 'src':
-        var type = "";
-        if (splitted[2]) {
-          type = splitted[2] + "/";
-        }
-        aVal = baseApi + '/entry/file/' + type + key(splitted[0], 'encodeURI');
+      case 'src': {
+        const type = parts[2] ? `${parts[2]}/` : "";
+        aVal = baseApi + '/entry/file/' + type + key(parts[0], 'encodeURI');
         break;
+      }
       case 'qr':
-        aVal = baseApi + '/form/qr?code=' + key(splitted[0],'encodeURIComponent');
+        aVal = baseApi + '/form/qr?code=' + key(parts[0], 'encodeURIComponent');
         break;
       case 'json':
-        aVal = key(`JSON.stringify(${splitted[0]})`);
+        aVal = key(`JSON.stringify(${parts[0]})`);
         break;
       case 'number':
-        aVal = key(`formatNumber(${splitted[0]},'en-US',${splitted[2]})`);
+        aVal = key(`formatNumber(${parts[0]},'en-US',${parts[2]})`);
         break;
       default:
         aVal = key(p1);
@@ -213,19 +153,19 @@ function r$val(match, p1, p2, p3, offset, string) {
   }
   return aVal;
 }
-function key(key, wrapFn?) {
-  return '"+get(function(){return ' + key + ' },"",' + wrapFn + ')+"';
+
+function key(expr: string, wrapFn?: string): string {
+  return `"+get(()=>${expr},"",${wrapFn || ''})+"`;
 }
 
-function get(fn, defaultVal, wrapFn) {
+function get(fn: () => any, defaultVal: any, wrapFn?: (val: any) => any): any {
   try {
-    var val = wrapFn ? wrapFn(fn()) : fn();
-    return (typeof val == "undefined" || val === null) ? defaultVal : val;
-  } catch (e) {
+    const val = wrapFn ? wrapFn(fn()) : fn();
+    return val == null ? defaultVal : val;
+  } catch {
     return defaultVal;
   }
 }
-
 
 export function mobileAndTabletCheck() {
   return /Mobi|Android/i.test(navigator.userAgent);
@@ -377,18 +317,15 @@ export function tblToExcel(title, html) {
   var base64 = function (s) {
     return window.btoa(unescape(encodeURIComponent(s)))
   };
-
   var format = function (s, c) {
     return s.replace(/{(\w+)}/g, function (m, p) {
       return c[p];
     })
   };
-
   var ctx = {
     worksheet: title,
     table: html
   }
-
   var link = document.createElement("a");
   link.download = title + ".xls";
   link.href = uri + base64(format(template, ctx));
@@ -441,16 +378,6 @@ export const deepMerge = (target, source) => {
   return target;
 }
 
-// function parseCSVOld(content: string): any[string] {
-//   return content.split(/,(?=(?:(?:[^"']*["']){2})*[^"']*$)/)
-//     .map(refi => refi
-//       .trim()
-//       // .replace(/[\x00-\x08\x0E-\x1F\x7F-\uFFFF]/g, "")
-//       .replace("\n", "")
-//       .replace(/^"|"$|"(?=,")|(?<=",)"/g, ""));
-// }
-
-
 function parseCSV(input) {
   const parts = [];
   let currentPart = '';
@@ -501,7 +428,6 @@ export function linkify(str){
   );
 };
 
-
 export function targetBlank(result){
   result = result.replace(/(<a [^>]*)(target="[^"]*")([^>]*>)/gi, '$1$3');
   result = result.replace(/(<a [^>]*)(>)/gi, '$1 target="_blank"$2');
@@ -549,4 +475,3 @@ export function getFileExt(filename){
   var ext = re.exec(filename)[1];
   return ext?'.'+ext:'';  
 }
-

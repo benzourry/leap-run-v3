@@ -60,7 +60,7 @@
             "fileReplacements": [
               {
                 "replace": "./src/app/_shared/constant.service.ts",
-                "with": "./src/app/_shared/constant-ireka.service.ts"
+                "with": "./src/app/_shared/constant-aa.service.ts"
               }
             ]
           },
@@ -75,11 +75,11 @@
                 {
                   "type": "anyComponentStyle",
                   "maximumWarning": "2kB",
-                  "maximumError": "6kB"
+                  "maximumError": "8kB"
                 }
               ],
               "outputHashing": "all",
-              "serviceWorker": "ngsw-config_ireka.json"
+              "serviceWorker": "ngsw-config_aa.json"
             },
             "development": {
               "optimization": false,

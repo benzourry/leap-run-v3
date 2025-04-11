@@ -6,39 +6,39 @@
       <div class="form">
         @if (!lookup().x?.codeHidden){
             <div class="form-group mb-3">
-                <label class="form-label">Code *</label>
+                <label class="form-label">{{lookup().x?.codeLbl??'Code'}} *</label>
                 <input type="text" class="form-control" name="code" #code="ngModel"
                     [(ngModel)]="lookupEntry().code" required />
                 @if (code?.invalid) {
                     <small class="form-text has-warning">
                     @if (code.errors?.required) {
-                        <span class="help-block">Code is required</span>
+                        <span class="help-block">{{lookup().x?.codeLbl??'Code'}} is required</span>
                     }
                     </small>
                 }
             </div>
         }
         <div class="form-group mb-3">
-          <label class="form-label">Name *</label>
+          <label class="form-label">{{lookup().x?.nameLbl??'Name'}} *</label>
           <input type="text" class="form-control" name="name" #name="ngModel"
             [(ngModel)]="lookupEntry().name" required />
           @if (name?.invalid) {
             <small class="form-text has-warning">
               @if (name.errors?.required) {
-                <span class="help-block">Description is required</span>
+                <span class="help-block">{{lookup().x?.nameLbl??'Name'}} is required</span>
               }
             </small>
           }
         </div>
         @if(!lookup().x?.extraDisabled){
           <div class="form-group mb-3">
-            <label class="form-label">Extra</label>
+            <label class="form-label">{{lookup().x?.extraLbl??'Extra'}}</label>
             <input type="text" class="form-control" name="extra" #extra="ngModel"
               [(ngModel)]="lookupEntry().extra" />
             @if (extra?.invalid) {
               <small class="form-text has-warning">
                 @if (extra.errors?.required) {
-                  <span class="help-block">Description is required</span>
+                  <span class="help-block">{{lookup().x?.extraLbl??'Extra'}} is required</span>
                 }
               </small>
             }
@@ -46,11 +46,11 @@
         }
         @if (lookup().dataEnabled) {
           <div class="form-group mb-3">
-            <label class="form-label">Data (Additional attributes)</label>
+            <label class="form-label text-muted small fw-bold">Data (Additional attributes)</label>
             <table width="100%">
               @for (e of lookupEntryFields; track $index) {
                 <tr>
-                  <td style="vertical-align:top">
+                  <td style="vertical-align:top;padding-top:3px;">
                     {{e.key}}
                   </td>
                   <td style="vertical-align:top">
@@ -82,6 +82,20 @@
                           <option [ngValue]="a">{{a}}</option>
                         }
                       </select>
+                    }
+                    @if (e.type=='lookup') {
+                      <!-- <select class="form-control form-control-sm" style="width:100%" name="value_{{$index}}"
+                        [compareWith]="compareByCodeFn"
+                        [(ngModel)]="lookupEntry().data[e.key]">
+                        @for (a of lookupListMap[e.opts]; track $index) {
+                          <option [ngValue]="a">{{a.name}}</option>
+                        }
+                      </select> -->
+                      <ng-select style="width:100%" class="ng-select-sm" [items]="lookupListMap[e.opts]" 
+                        [virtualScroll]="true" 
+                        bindLabel="name" placeholder="No value" [(ngModel)]="lookupEntry().data[e.key]"
+                        name="value_{{$index}}">
+                      </ng-select>
                     }
                     @if (e.type=='file') {
                       <label style="width:100%">
