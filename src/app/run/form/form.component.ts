@@ -37,7 +37,7 @@ import { ScreenComponent } from '../screen/screen.component';
 import { ListComponent } from '../list/list.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { EditLookupEntryComponent } from '../../_shared/modal/edit-lookup-entry/edit-lookup-entry.component';
-import { FieldEditComponent } from '../_component/field-edit-a/field-edit-a.component';
+import { FieldEditComponent } from '../_component/field-edit-b/field-edit-b.component';
 import { FieldViewComponent } from '../_component/field-view.component';
 import { FormViewComponent } from '../_component/form-view.component';
 import { PageTitleComponent } from '../_component/page-title.component';
@@ -109,6 +109,8 @@ export class FormComponent implements OnInit, OnDestroy, AfterViewChecked, Compo
 
   isEmpty = inputObject => inputObject && Object.keys(inputObject).length === 0;
 
+  prevSignalKey:string='';
+
   constructor(private userService: UserService, public runService: RunService,
     private router: Router, private route: ActivatedRoute, private http: HttpClient,
     private lookupService: LookupService, private entryService: EntryService,
@@ -120,19 +122,40 @@ export class FormComponent implements OnInit, OnDestroy, AfterViewChecked, Compo
     location.onPopState(() => this.modalService.dismissAll(''));
     
     effect(()=>{
+
+             
+      if (this.formId() && this._formId != this.formId()){ // formId berubah
+        this.getLookupIdList(this.formId());
+      }
+
       // x sure knak tok disabled sebelum tok 8/nov/2024
-      if (this.entryId()){
+      // if (this.entryId()!=this._entryId){
         this._entryId = this.entryId();
-      }
-      if (this.formId()){
+      // }
+      // if (this.formId()!=this._formId){
         this._formId = this.formId();
-      }
-      if (this.action()){
+      // }
+      // if (this.action()!=this._action){
         this._action = this.action();
-      }
-      if (this.$param$()){
+      // }
+      // if (this.$param$()!=this._param){
         this._param = this.$param$();
+      // }
+
+      const key = `${this._formId}|${this._entryId}|${this._action}|${this._param}`;
+
+      if (this._entryId && this._formId && this._param && this._action && key != this.prevSignalKey) {
+        this.prevSignalKey = key;
+        console.log("## SIGNAL", this._formId, this._entryId, this._action, this._param);
+        this.getForm(this._formId, this._entryId, this._action);
       }
+
+      // if (
+      //   this.entryId() && this.formId() && this.$param$() && this.action() &&
+      //   (this._entryId != this.entryId() || this._formId != this.formId() || this._action != this.action() || this._param != this.$param$())
+      // ){
+      //   this.getForm(this._formId, this._entryId, this._action);
+      // }
     })
 
     this.valueUpdate
@@ -184,6 +207,7 @@ export class FormComponent implements OnInit, OnDestroy, AfterViewChecked, Compo
 
       // parameter entryId perlu ada utk execute form query n update page. maybe bleh pake 'single'
       if (this.asComp()) {
+ 
         this._entryId = this.entryId();
         this._formId = this.formId();
         this._action = this.action();
@@ -242,6 +266,7 @@ export class FormComponent implements OnInit, OnDestroy, AfterViewChecked, Compo
   }
 
   dsChanged(ev, fieldCode) {
+    // console.log("testttt")
     this.$this$[fieldCode] = ev;
     this.fieldChange(ev, this.entry?.data, this.form.items[fieldCode], false)
     this.cdr.detectChanges();
@@ -704,11 +729,11 @@ export class FormComponent implements OnInit, OnDestroy, AfterViewChecked, Compo
 
   valueUpdate = new Subject<any>();
 
-  debFieldChange($event, data, field, section) {
+  debFieldChange($event, data, field, section, index) {
     // EXTRACT BY AI
     if (field.x?.extractor) {
       if (!field.x?.stopWord || $event?.toLowerCase().includes(field.x?.stopWord?.toLowerCase())){
-        this.extractData(field, field.x?.extractor, [], $event, data);        
+        this.extractData(field, field.x?.extractor, [], $event, data, index);        
       }
     }
     // console.log("debFieldChange")
@@ -1207,7 +1232,7 @@ export class FormComponent implements OnInit, OnDestroy, AfterViewChecked, Compo
       this.entry.data[section.code].splice($index, 1);
       this.entryForm().form.markAsDirty();
     }
-    this.evalAll(this.entry.data);
+    this.$digest$();
   }
 
   // uploading = {};
@@ -1238,6 +1263,8 @@ export class FormComponent implements OnInit, OnDestroy, AfterViewChecked, Compo
   uploadProgress: any = {};
 
   onUpload(fileList, data, f, evalEntryData, index) {
+
+    // console.log("fileList", fileList);
     if (fileList && fileList.length) {
       var totalSize = fileList.reduce((total, i) => total + i.size, 0);
       var progressSize = 0;
@@ -1353,9 +1380,11 @@ export class FormComponent implements OnInit, OnDestroy, AfterViewChecked, Compo
   processUpload(res, data, fileList, evalEntryData, progressSize,f, totalSize, index, multi, list){
     if (res.type === HttpEventType.UploadProgress) {
       progressSize = res.loaded;
+      // console.log("progressSize",progressSize);
       this.uploadProgress[f.code + (index ?? '')] = Math.round(100 * progressSize / totalSize);
     } else if (res instanceof HttpResponse) {
       if (res.body?.success){
+        this.uploadProgress[f.code + (index ?? '')] = 100;
         if (multi){
           list.push(res.body.fileUrl)
           data[f.code] = list
@@ -1368,10 +1397,10 @@ export class FormComponent implements OnInit, OnDestroy, AfterViewChecked, Compo
         this.entryFiles.push(res.body.fileUrl);
 
         if (f.x?.extractor) {
-          this.extractData(f, f.x?.extractor, [res.body.fileUrl],null, data);
+          this.extractData(f, f.x?.extractor, [res.body.fileUrl],null, data, index);
         }
         if (f.x?.imgcls){
-          this.imgclsData(f, f.x?.imgcls,[res.body.fileUrl], data );
+          this.imgclsData(f, f.x?.imgcls,[res.body.fileUrl], data, index );
         }
       }else{
         this.toastService.show(res.body?.message, { classname: 'bg-danger text-light' });
@@ -1379,16 +1408,16 @@ export class FormComponent implements OnInit, OnDestroy, AfterViewChecked, Compo
     }
   }
 
-  onBlur($event,data,field,section){
+  onBlur($event,data,field,section, index){
     if (field.x?.extractor) {
       // if (!field.x?.stopWord || $event?.toLowerCase().includes(field.x?.stopWord?.toLowerCase())){
-        this.extractData(field, field.x?.extractor, [], data[field.code], data);        
+        this.extractData(field, field.x?.extractor, [], data[field.code], data, index);        
       // }
     }
     if (field.x?.txtcls) {
       // console.log("data",data[field.code])
       // if (!field.x?.stopWord || $event?.toLowerCase().includes(field.x?.stopWord?.toLowerCase())){
-        this.classifyData(field, field.x?.txtcls, field.x?.txtclsTarget, data[field.code], data);        
+        this.classifyData(field, field.x?.txtcls, field.x?.txtclsTarget, data[field.code], data, index);        
       // }
     }
   }
@@ -1429,8 +1458,8 @@ export class FormComponent implements OnInit, OnDestroy, AfterViewChecked, Compo
   }
 
   extractLoading:any={}
-  extractData(field, cognaId, docList, text, data) {
-    this.extractLoading[field.code] = true;
+  extractData(field, cognaId, docList, text, data, index) {
+    this.extractLoading[field.code+(index??'')] = true;
     this.runService.cognaExtract(cognaId, text, docList, false, this.user.email)
       .subscribe({
         next: res => {
@@ -1439,16 +1468,16 @@ export class FormComponent implements OnInit, OnDestroy, AfterViewChecked, Compo
           deepMerge(data, rval);
           this.evalAll(data);
           this.filterItems();
-          this.extractLoading[field.code] = false;
+          this.extractLoading[field.code+(index??'')] = false;
         },
         error: err => {
-          this.extractLoading[field.code] = false;
+          this.extractLoading[field.code+(index??'')] = false;
         }
       });
   }
 
   classifyLoading:any={}
-  classifyData(field, cognaId, targetField, text, data) {
+  classifyData(field, cognaId, targetField, text, data, index) {
     this.classifyLoading[field.code] = true;
     this.runService.cognaClassify(cognaId, text, false, this.user.email)
       .subscribe({
@@ -1456,17 +1485,19 @@ export class FormComponent implements OnInit, OnDestroy, AfterViewChecked, Compo
           data[targetField] = res.data;
           this.$this$[field.code]={txtcls:res.data}
           this.filterItems();
-          this.classifyLoading[field.code] = false;
+          this.classifyLoading[field.code+(index??'')] = false;
         },
         error: err => {
-          this.classifyLoading[field.code] = false;
+          this.classifyLoading[field.code+(index??'')] = false;
         }
       });
   }
 
   imgclsLoading:any={}
-  imgclsData(field, cognaId, docList, data) {
-    this.imgclsLoading[field.code] = true;
+  imgclsVal:any={}
+  imgclsModel:any={}
+  imgclsData(field, cognaId, docList, data, indexChild) {
+    this.imgclsLoading[field.code+(indexChild??'')] = true;
     this.runService.cognaImgCls(cognaId, docList, false, this.user.email)
       .subscribe({
         next: res => {
@@ -1480,12 +1511,18 @@ export class FormComponent implements OnInit, OnDestroy, AfterViewChecked, Compo
             txtList.push(txt);
           })
           data[field.x?.imgclsTarget] = txtList.join("\n\n");
-          this.$this$[field.code]={imgcls:res}
+          // masalah dgn multi file upload
+          this.$this$[field.code+(indexChild??'')]={imgcls:res}
           this.filterItems();
-          this.imgclsLoading[field.code] = false;
+          this.imgclsLoading[field.code+(indexChild??'')] = false;
+          if (field?.v?.imgcls){
+            var imgclsres = Object.values(res).map((i:any[])=>i.map(j=>j.desc).join(",")).join(",");
+            this.imgclsVal[field.code+(indexChild??'')] = (imgclsres??'').includes(field?.v?.imgcls) ? true : false;
+            console.log("imgclsVal", this.imgclsVal)
+          }
         },
         error: err => {
-          this.imgclsLoading[field.code] = false;
+          this.imgclsLoading[field.code+(indexChild??'')] = false;
         }
       });
   }
@@ -1513,6 +1550,7 @@ export class FormComponent implements OnInit, OnDestroy, AfterViewChecked, Compo
       items[index + op].altClass = 'swapEnd';
       items[index].altClass = 'swapEnd';
     }, 500);
+    this.$digest$();
   }
 
   canDeactivate() {
