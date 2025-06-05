@@ -543,20 +543,20 @@ ngb-pagination ul.pagination{
 //   color: #999;
 // }
 
-// @keyframes blinker {
-//   50% {
-//     opacity: 0;
-//   }
-// }
+@keyframes blinker {
+  50% {
+    opacity: 0;
+  }
+}
 
-// .swapStart {
-//   animation: blinker 0.25s linear infinite;
-// }
+.swapStart {
+  animation: blinker 0.25s linear infinite;
+}
 
-// .swapEnd {
-//   opacity: 1;
-//   transition: all 0.25s ease-in;
-// }
+.swapEnd {
+  opacity: 1;
+  transition: all 0.25s ease-in;
+}
 
 // .cursor-move {
 //   cursor: move;

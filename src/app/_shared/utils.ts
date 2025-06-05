@@ -73,7 +73,7 @@ export function compileTpl(templateText: string, data: any): string {
         .replace(/<\/x-foreach>/ig, '";})\noutput+="')
         .replace(/<\?(.+?)\?>/g, '";$1\noutput+="')
       + ";return output;"
-    ).replace(/(?:^|<\/x-markdown>)[\s\S]*?(?:<x-markdown>|$)/g, m => m.replace(/(?:\\[rnt])+/gm, ""));
+    ).replace(/(?:^|<\/x-markdown>)[\s\S]*?(?:<x-markdown>|$)/g, m => m); //.replace(/(?:\\[rnt])+/gm, "")
     tplCache[tplHash] = code;
   }
 

@@ -59,6 +59,7 @@ export class LoginComponent implements OnInit {
       .subscribe(res => {
         this.buildLoginList(res);
         this.app = res;
+        this.runService.$app.set(this.app);
         this.titleService.setTitle('Login ' + this.app.title);
         let desc = this.app.title;
         if (this.app?.description){

@@ -138,7 +138,7 @@ export class StartComponent implements OnInit {
             this.$param$ = params;
             this.appId = params['appId'];
             if (this.appId) {
-              console.log("App by id", this.appId)
+              // console.log("App by id", this.appId)
               this.preurl = `/run/${this.appId}`;
               this.runService.$preurl.set(this.preurl);
               this.getApp(this.appId);
@@ -160,7 +160,7 @@ export class StartComponent implements OnInit {
               this.editMode = true;
               this.getDesignUrl();
             } else {
-              console.log("App by path", this.getPath())
+              // console.log("App by path", this.getPath())
               this.getAppByPath(this.getPath());
             }
             this.baseUrl = (location.protocol + '//' + location.hostname + (location.port ? ':' + location.port : '')) + '/#' + this.preurl;
@@ -186,7 +186,7 @@ export class StartComponent implements OnInit {
       name: this.user.name,
       autoReg: false
     }
-    this.runService.saveAppUser(this.app.id, payload)
+    this.runService.regAppUser(this.app.id, payload)
       .subscribe(res => {
         this.user = res.user;
         this.userService.setUser(res.user);
@@ -315,11 +315,11 @@ export class StartComponent implements OnInit {
             
             if (!url){
               if (res.startPage) {
-                console.log('ada startpage', url);
+                // console.log('ada startpage', url);
                 // this.startPage = res.startPage;
                 this.router.navigate([res.startPage], { relativeTo: this.route, queryParams: this.route.snapshot.queryParams });
               }else{
-                console.log('x ada startpage', url);
+                // console.log('x ada startpage', url);
                 this.router.navigate(['start'],{ relativeTo: this.route});
               }
             }
@@ -476,8 +476,9 @@ export class StartComponent implements OnInit {
 
   initScreen(js) {
     let res = undefined;
+    let jsTxt = this.compileTpl(js, {$param$:this.$param$,$this$:this.$this$,$user$:this.user, $conf$:this.runService.appConfig,$base$:base, $baseUrl$:this.baseUrl, $baseApi$:baseApi})
     try {
-      res = this._eval(js);// new Function('$', '$prev$', '$user$', '$http$', 'return ' + f)(this.entry.data, this.entry && this.entry.prev, this.user, this.httpGet);
+      res = this._eval(jsTxt);// new Function('$', '$prev$', '$user$', '$http$', 'return ' + f)(this.entry.data, this.entry && this.entry.prev, this.user, this.httpGet);
     } catch (e) { this.logService.log(`{tiles-${this.app.title}-initNavi}-${e}`) }
     this.runPre();
     return res;

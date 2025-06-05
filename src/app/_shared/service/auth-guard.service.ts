@@ -46,6 +46,7 @@ export class AuthGuardService {
       let appId = getQuery("appId");
       let noframe = getQuery("noframe");
 
+      // cuma yg failed jk perlu redirect.. mn success/subject(true) xperlu, akan dihandle oleh route
       if (apiKey){
         window.localStorage.setItem("auth", btoaUTF(JSON.stringify({apiKey: apiKey})));
         fetch(`${OAUTH.USER_URI}?appId=${appId}`, {headers: { Authorization: `ApiKey ${apiKey}`} })
@@ -59,10 +60,6 @@ export class AuthGuardService {
               } else {
                 window.localStorage.setItem("user", btoaUTF(JSON.stringify(f)));
                 window.localStorage.setItem("noframe", noframe);
-                window.localStorage.removeItem("userexp");
-
-                // this.router.navigate([window.localStorage.getItem("redirect") ? window.localStorage.getItem("redirect") : OAUTH.FINAL_URI])
-                window.location.href = window.localStorage.getItem("redirect") ? "/#" + window.localStorage.getItem("redirect") : OAUTH.FINAL_URI;
                 subject.next(true); 
               }
             })
@@ -76,14 +73,16 @@ export class AuthGuardService {
                 window.localStorage.setItem("auth", btoaUTF(JSON.stringify(f.auth))),
                 window.localStorage.setItem("user", btoaUTF(JSON.stringify(f.user)));
                 window.localStorage.setItem("noframe", noframe);
-                window.localStorage.removeItem("userexp");
                 if (!f.user.checked){
                   this.router.navigate['check'];
                 }
                 subject.next(true);
               } else {
-                window.localStorage.setItem("error", JSON.stringify(f.error));
+                window.localStorage.setItem("error", JSON.stringify(f.error)+"<br><br>Do you wish to try again? If so, please click on the button below to continue.");
+                window.localStorage.setItem("redirect", state.url);
+                window.localStorage.setItem("nextUrl", `${OAUTH.AUTH_URI}/${provider}?appId=${appId}&redirect_uri=${encodeURIComponent(OAUTH.CALLBACK)}`);
                 window.location.href = "/assets/error.html";
+
                 // window.location.href = `/assets/token.html?accessToken=${accessToken}&provider=${provider}&noframe=${noframe}`;
                 subject.next(false);
                 //error
@@ -91,26 +90,22 @@ export class AuthGuardService {
             })
           })
       } else if (token) {
-        // console.log("redirect:"+window.localStorage.getItem("redirect"));
         window.localStorage.setItem("auth", btoaUTF(JSON.stringify({accessToken: token})));
         fetch(`${OAUTH.USER_URI}`, { headers: { Authorization: "Bearer " + token } })
           .then(d=>{
             d.json().then(f=>{
               if (f.error) {
-                window.localStorage.setItem("error", JSON.stringify(f.error));
+                window.localStorage.setItem("error", JSON.stringify(f.error)+"<br><br>Do you wish to try again? If so, please click on the button below to continue.");
+                window.localStorage.setItem("redirect", state.url);
+                window.localStorage.setItem("nextUrl", `${OAUTH.AUTH_URI}/${provider}?appId=${appId}&redirect_uri=${encodeURIComponent(OAUTH.CALLBACK)}`);
                 window.location.href = "/assets/error.html";
                 subject.next(false);
 
               } else {
-                // window.localStorage.setItem("auth", JSON.stringify(f.auth));
                 window.localStorage.setItem("user", btoaUTF(JSON.stringify(f)));
                 window.localStorage.setItem("noframe", noframe);
-                window.localStorage.removeItem("userexp");
-
-                // console.log(window.localStorage.getItem("redirect") ? "/#" + window.localStorage.getItem("redirect") : OAUTH.FINAL_URI);
-                // this.router.navigate([window.localStorage.getItem("redirect") ? window.localStorage.getItem("redirect") : OAUTH.FINAL_URI])
-                this.router.navigateByUrl(window.localStorage.getItem("redirect") ? window.localStorage.getItem("redirect") : OAUTH.FINAL_URI);
-                // window.location.href = window.localStorage.getItem("redirect") ? "/#" + window.localStorage.getItem("redirect") : OAUTH.FINAL_URI;
+                this.router.navigateByUrl(window.localStorage.getItem("redirect") ? window.localStorage.getItem("redirect") : '/');
+                window.localStorage.removeItem("redirect");
                 subject.next(true); 
               }
             })
@@ -121,7 +116,7 @@ export class AuthGuardService {
         window.localStorage.setItem("error", split[0]);
         //  `${OAUTH.AUTH_URI}/${server}?appId=-1&redirect_uri=${encodeURIComponent(OAUTH.CALLBACK)}`
         if (split.length>1){
-          window.localStorage.setItem("nextUrl", `${OAUTH.AUTH_URI}/${split[1]}?appId=-1&redirect_uri=${encodeURIComponent(OAUTH.CALLBACK)}`);
+          window.localStorage.setItem("nextUrl", `${OAUTH.AUTH_URI}/${split[1]}?appId=${appId}&redirect_uri=${encodeURIComponent(OAUTH.CALLBACK)}`);
         }      
 
         window.location.href = "/assets/error.html";
