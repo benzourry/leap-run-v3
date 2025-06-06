@@ -8,7 +8,7 @@ const svgCache: Record<string, string> = {};
 const tplCache: Record<number, string> = {};
 
 const hashCode = (s: string): number =>
-  s.split('').reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0);
+  s?.split('').reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0);
 
 marked.use({
   extensions: [{
@@ -42,6 +42,7 @@ const tag2sym = { table: 'table_', tr: 'tr_', td: 'td_', th: 'th_', tbody: 'tbod
 const sym2tag = { table_: 'table', tr_: 'tr', td_: 'td', th_: 'th', tbody_: 'tbody', thead_: 'thead', src_:'src' };
 
 export function compileTpl(templateText: string, data: any): string {
+  if (!templateText) return "";
   const tplHash = hashCode(templateText);
   let code = tplCache[tplHash];
 
@@ -63,17 +64,21 @@ export function compileTpl(templateText: string, data: any): string {
         .replace(/<!--(.+?)-->/g, '')
         .replace(/\{\{(.+?)\}\}/g, r$val)
         .replace(/\[#(.+?)#\]/g, r$script)
-        .replace(/<x-if\s*\$=\\\"(.+?)\\\"\s*>/ig, '";if($1){\noutput+="')
+        // .replace(/<x-if\s*\$=\\\"(.+?)\\\"\s*>/ig, '";if($1){\noutput+="')
+        .replace(/<x-if\s*\$=\\\"(.+?)\\\"\s*>/ig, (m, p1) => '";if('+p1.replace(/\\[rnt]+/gm, '')+'){\noutput+="')
         .replace(/<x-else\s*\/?\s*>/ig, '";}else{\noutput+="')
-        .replace(/<x-else-if\s*\$=\\\"(.+?)\\\"\s*\/?\s*>/ig, '";}else if($1){\noutput+="')
+        // .replace(/<x-else-if\s*\$=\\\"(.+?)\\\"\s*\/?\s*>/ig, '";}else if($1){\noutput+="')
+        .replace(/<x-else-if\s*\$=\\\"(.+?)\\\"\s*\/?\s*>/ig, (m, p1) => '";}else if('+p1.replace(/\\[rnt]+/gm, '')+'){\noutput+="')
         .replace(/<\/x-if>/ig, '";}\noutput+="')
-        .replace(/<x-for\s*\$\=\\\"(.+?)\\\"\s*>/ig, '";for($1){\noutput+="')
+        // .replace(/<x-for\s*\$\=\\\"(.+?)\\\"\s*>/ig, '";for($1){\noutput+="')
+        .replace(/<x-for\s*\$\=\\\"(.+?)\\\"\s*>/ig, (m, p1) => '";for('+p1.replace(/\\[rnt]+/gm, '')+'){\noutput+="')
         .replace(/<\/x-for>/ig, '";}\noutput+="')
         .replace(/<x-foreach\s*\$\=\\\"(.+?)\\\"\s*>/ig, r$foreach)
         .replace(/<\/x-foreach>/ig, '";})\noutput+="')
         .replace(/<\?(.+?)\?>/g, '";$1\noutput+="')
+        // .replace(/<\?(.+?)\?>/g, (match, p1) => `";${p1.replace(/\s+/g, '')}\noutput+="`)
       + ";return output;"
-    ).replace(/(?:^|<\/x-markdown>)[\s\S]*?(?:<x-markdown>|$)/g, m => m); //.replace(/(?:\\[rnt])+/gm, "")
+    );//.replace(/(?:^|<\/x-markdown>)[\s\S]*?(?:<x-markdown>|$)/g, m => m.replace(/(?:\\[rnt])+/gm, "")) 
     tplCache[tplHash] = code;
   }
 
@@ -360,7 +365,10 @@ export function atobUTF(str) {
   }).join(''))
 }
 
-export const deepMerge = (target, source) => {
+export const deepMerge = (t, s) => {
+
+  var source = Object.assign({}, s);
+  var target = Object.assign({}, t);
   // Iterate through `source` properties and if an `Object` set property to merge of `target` and `source` properties
   if (source != null) {
     for (const key of Object.keys(source)) {
