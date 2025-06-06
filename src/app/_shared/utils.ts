@@ -78,10 +78,10 @@ export function compileTpl(templateText: string, data: any): string {
         .replace(/<\?(.+?)\?>/g, '";$1\noutput+="')
         // .replace(/<\?(.+?)\?>/g, (match, p1) => `";${p1.replace(/\s+/g, '')}\noutput+="`)
       + ";return output;"
-    );//.replace(/(?:^|<\/x-markdown>)[\s\S]*?(?:<x-markdown>|$)/g, m => m.replace(/(?:\\[rnt])+/gm, "")) 
+    )//.replace(/(?:^|<\/x-markdown>)[\s\S]*?(?:<x-markdown>|$)/g, m => m.replace(/(?:\\[rnt])+/gm, "")) 
     tplCache[tplHash] = code;
   }
-
+  
   if (templateText && data) {
     data.dayjs = dayjs;
     let result = "";
@@ -90,10 +90,12 @@ export function compileTpl(templateText: string, data: any): string {
       result = result.replaceAll("\n", "\\n")
                      .replace(/<x-markdown>(.+?)<\/x-markdown>/ig, r$markdown)
                      .replaceAll("\\n", "\n");
+
     } catch (err) {
       throw err;
     }
     return result;
+
   }
   return templateText;
 }
@@ -126,7 +128,7 @@ function r$script(match: string, p1: string): string {
 }
 
 function r$val(match: string, p1: string): string {
-  p1 = p1.replace(/\\"/g, '"');
+  p1 = p1.replace(/\\"/g, '"').replace(/\\[rnt]+/gm, '');
   const parts = p1.match(/(['"].*?["']|[^"|:\s]+)/g) || [];
   let aVal = "";
   if (parts.length > 1) {
