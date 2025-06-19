@@ -73,7 +73,8 @@ import {
     faCircleUser, faEye,
     faCircle as farCircle, faFile as farFile, faCheckSquare as farCheckSquare, faSquare as farSquare, faUser, faCaretSquareDown, faEnvelope, faCalendarAlt, faQuestionCircle, faCommentDots, faThumbsUp, faFileArchive, faMessage,
     faClock,
-    faFileLines
+    faFileLines,
+    faEyeSlash
 } from '@fortawesome/free-regular-svg-icons';
 import {
     faGoogle, faFacebookF, faGithub, faLinkedin, faWpforms, faMicrosoft, faTwitter, faUncharted
@@ -131,7 +132,7 @@ export class SharedModule {
             faThLarge, faEnvelope, faSearch,faCircleUser, faFilter, faAsterisk, faCaretSquareDown, faUser, faSignOutAlt, faSave, faAngleRight, faFile, faTimes, faTachometerAlt, faPlusSquare, farPlusSquare, farMinusSquare,
             faListOl, faCalendar, faCalendarAlt, faPaperPlane, faQuestion, faArrowUp, faArrowDown, faInfoCircle, faAngleRight, faArrowLeft, faArrowRight, faExclamationTriangle, faFileArchive,
             faReply, faQrcode, faShare, faTable, faList, farCircle, fasCircle, faFileExcel, faListAlt, faUpload, faAngleDoubleRight, faAngleDoubleLeft, faGlobe, faSort, faLock,
-            faChartBar, faChartArea, faChartLine, faChartPie, faUsersCog, faUsers, faFileExport,faEllipsisH, faUncharted, faRobot, faFlag, farFlag, faImage, faBolt, faEye, faFileImport,
+            faChartBar, faChartArea, faChartLine, faChartPie, faUsersCog, faUsers, faFileExport,faEllipsisH, faUncharted, faRobot, faFlag, farFlag, faImage, faBolt, faEye, faEyeSlash, faFileImport,
             faLocationCrosshairs, faLocationDot, faPlane, faMagnifyingGlassLocation, faLaptopMedical, faAddressBook, faFileInvoiceDollar, faPhotoFilm, faLayerGroup, faMessage, faDiagramProject, faFileLines,
             faMicrophone, faClock);
     }

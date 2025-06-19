@@ -46,6 +46,8 @@ export class LoginComponent implements OnInit {
   cred: any = {};
   privacyPolicy: string = OAUTH.PRIVACY_POLICY;
 
+  passwordType:string="password";
+
   constructor(private route: ActivatedRoute, private runService: RunService, private userService: UserService,
     private titleService: Title, private meta: Meta) { }
 
@@ -55,7 +57,7 @@ export class LoginComponent implements OnInit {
     this.route.queryParams
       .subscribe(params => this.redirect = params['redirect'] || '/');
 
-    this.runService.getAppByPath(this.getPath())
+    this.runService.getRunAppByPath(this.getPath())
       .subscribe(res => {
         this.buildLoginList(res);
         this.app = res;
@@ -138,12 +140,12 @@ export class LoginComponent implements OnInit {
           var auth = {
             accessToken: token
           };
-          window.localStorage.setItem("auth", btoaUTF(JSON.stringify(auth)));
+          window.localStorage.setItem("auth", btoaUTF(JSON.stringify(auth),null));
           fetch(OAUTH.USER_URI, { headers: { 'Authorization': 'Bearer ' + token } })
             .then(function (response) {
               response.json().then(function (json) {
                 if (!json.error) {
-                  window.localStorage.setItem("user", btoaUTF(JSON.stringify(json)));
+                  window.localStorage.setItem("user", btoaUTF(JSON.stringify(json),null));
                   location.href = window.localStorage.getItem("redirect") ? "/#" + window.localStorage.getItem("redirect") : OAUTH.FINAL_URI;
                 } else {
                   alert(json.error);

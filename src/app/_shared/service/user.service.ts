@@ -59,7 +59,7 @@ export class UserService {
   }
 
   setUser(user){
-    window.localStorage.setItem("user", btoaUTF(JSON.stringify(user)));
+    window.localStorage.setItem("user", btoaUTF(JSON.stringify(user),null));
   }
 
   // getUser(): Observable<any> {
@@ -128,7 +128,7 @@ export class UserService {
         return this.http.get<any>(`${OAUTH.USER_URI}?${keyType}=${keyValue}`).pipe(
           tap({
             next: (res) => {
-              window.localStorage.setItem('user', btoaUTF(JSON.stringify(res)));
+              window.localStorage.setItem('user', btoaUTF(JSON.stringify(res),null));
               this.user = of(res);
               // window.localStorage.removeItem('userexp');
             },
@@ -150,7 +150,7 @@ export class UserService {
 
   getToken = () =>  {
     // #####TO-DO need to change to atob later when the time is ready;
-    var authStr=atobUTF(localStorage.getItem("auth"));
+    var authStr=atobUTF(localStorage.getItem("auth"),null);
     return JSON.parse(authStr).accessToken;
   };
 
@@ -160,7 +160,7 @@ export class UserService {
       window.location.href = `${OAUTH.AUTH_URI}/${server}?redirect_uri=${OAUTH.CALLBACK}`;
 
     // #####TO-DO need to change to atob later when the time is ready;
-    var authStr = atobUTF(localStorage.getItem("auth"));
+    var authStr = atobUTF(localStorage.getItem("auth"),null);
     return JSON.parse(authStr);
   };
 

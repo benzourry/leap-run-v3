@@ -138,7 +138,6 @@ export class StartComponent implements OnInit {
             this.$param$ = params;
             this.appId = params['appId'];
             if (this.appId) {
-              // console.log("App by id", this.appId)
               this.preurl = `/run/${this.appId}`;
               this.runService.$preurl.set(this.preurl);
               this.getApp(this.appId);
@@ -157,10 +156,9 @@ export class StartComponent implements OnInit {
                 this.getNaviData(this.appId, this.user.email);
               }
               // this.getStart(this.appId);
-              this.editMode = true;
-              this.getDesignUrl();
+              // this.editMode = true;
+              // this.getDesignUrl();
             } else {
-              // console.log("App by path", this.getPath())
               this.getAppByPath(this.getPath());
             }
             this.baseUrl = (location.protocol + '//' + location.hostname + (location.port ? ':' + location.port : '')) + '/#' + this.preurl;
@@ -273,7 +271,7 @@ export class StartComponent implements OnInit {
   startPage:string='start';
   getAppByPath(path) {
     this.appLoading = true;
-    this.runService.getAppByPath(path, { email: this.user.email })
+    this.runService.getRunAppByPath(path, { email: this.user.email })
       .subscribe({
         next: (res) => {
           this.appLoading = false;
@@ -292,7 +290,7 @@ export class StartComponent implements OnInit {
             }
             this.titleService.setTitle(this.app.title);
             if (this.app.once) {
-              this.runService.getScreen(this.app.once)
+              this.runService.getRunScreen(this.app.once)
                 .subscribe(screen => this.screen = screen);
             }
 
@@ -340,7 +338,7 @@ export class StartComponent implements OnInit {
   isDev: boolean;
   getApp(id) {
     this.appLoading = true;
-    this.runService.getApp(id, { email: this.user.email })
+    this.runService.getRunApp(id, { email: this.user.email })
       .subscribe({
         next: (res) => {
           this.app = res;
@@ -358,7 +356,7 @@ export class StartComponent implements OnInit {
             this.navToggle = {};
           }
           if (this.app.once) {
-            this.runService.getScreen(this.app.once)
+            this.runService.getRunScreen(this.app.once)
               .subscribe(screen => this.screen = screen);
           }
           this.checkPush(this.app);
@@ -392,39 +390,39 @@ export class StartComponent implements OnInit {
     // localStorage.setItem("darkMode",this.darkMode+"");
   }
 
-  designUrl: any;
-  getDesignUrl() {
-    var split = location.hash.split('/');
-    var appId = split[2].replace(/\D/g,'');
-    if (split[3]) {
-      if (['form', 'dataset', 'dashboard', 'screen'].indexOf(split[3]) > -1) {
-        this.designUrl = {
-          url: `/design/${appId}/ui/${split[3]}`,
-          query: { id: split[4] }
-        }
-      } else if(['profile'].indexOf(split[3]) > -1){
-        this.designUrl = {
-          url: `/design/${appId}/`,
-          query: undefined
-        }
-      }else if(['start'].indexOf(split[3]) > -1){
-        this.designUrl = {
-          url: `/design/${appId}/ui/navi`,
-          query: undefined
-        }
-      } else {
-        this.designUrl = {
-          url: `/design/${appId}/${split[3]}`,
-          query: { id: split[4] }
-        }
-      }
-    } else {
-      this.designUrl = {
-        url: `/design/${appId}/`,
-        query: undefined
-      }
-    }
-  }
+  // designUrl: any;
+  // getDesignUrl() {
+  //   var split = location.hash.split('/');
+  //   var appId = split[2].replace(/\D/g,'');
+  //   if (split[3]) {
+  //     if (['form', 'dataset', 'dashboard', 'screen'].indexOf(split[3]) > -1) {
+  //       this.designUrl = {
+  //         url: `/design/${appId}/ui/${split[3]}`,
+  //         query: { id: split[4] }
+  //       }
+  //     } else if(['profile'].indexOf(split[3]) > -1){
+  //       this.designUrl = {
+  //         url: `/design/${appId}/`,
+  //         query: undefined
+  //       }
+  //     }else if(['start'].indexOf(split[3]) > -1){
+  //       this.designUrl = {
+  //         url: `/design/${appId}/ui/navi`,
+  //         query: undefined
+  //       }
+  //     } else {
+  //       this.designUrl = {
+  //         url: `/design/${appId}/${split[3]}`,
+  //         query: { id: split[4] }
+  //       }
+  //     }
+  //   } else {
+  //     this.designUrl = {
+  //       url: `/design/${appId}/`,
+  //       query: undefined
+  //     }
+  //   }
+  // }
 
   baseUrl: string = '';
   $this$: any = {}
@@ -442,9 +440,14 @@ export class StartComponent implements OnInit {
 
   preGroup:any={}
   preItem:any={}
+  firstActiveSet:boolean=false;
   runPre(){
-    this.navis?.forEach(group=>{
+    this.navis?.forEach((group,index)=>{
       this.preGroup[group.id]=this.preCheck(group);
+      if(!this.firstActiveSet && this.preGroup[group.id]){
+        this.firstActiveSet = true;
+        this.navToggle[index] = true;
+      }
       group.items?.forEach(item=>{
         this.preItem[item.id]=this.preCheck(item);
       })

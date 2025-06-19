@@ -267,7 +267,7 @@ body {
 
   .topnav .content {
     // height: 100%;
-    overflow: auto; 
+    overflow: auto; // problem mn dataset lebar. xpat scroll mn xda overflow:auto.
   }
 
   .topnav .menu-items {
@@ -304,4 +304,11 @@ body {
     right:0px;
     top:55px;
   }
+}
+
+.menu-text{
+  margin-left:28px;
+}
+.menu-items fa-icon{
+  float:left;
 }

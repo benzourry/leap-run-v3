@@ -47,40 +47,56 @@
               }
               <input id="input-signup-email" class="form-control rounded-50 my-1 w-unset" type="text" name="email"
                 [(ngModel)]="cred.email" placeholder="Email" required>
-                <input id="input-signup-password" class="form-control rounded-50 my-1 w-unset" type="password" name="password"
-                  [(ngModel)]="cred.password" placeholder="Password" required>
-                </div>
-                @if (!register) {
-                  <div class="text-center d-flex justify-content-between">
-                    <!-- <button class="btn text-left rounded-pill btn-outline-secondary my-1 px-3" (click)="register=true"
-                    tabindex="-1">
-                  Signup</button>
-                  <button class="btn text-left rounded-pill btn-primary my-1 px-3" [disabled]="loginForm.invalid"
-                    (click)="signin(cred)">
-                  Login</button> -->
-                  <button id="btn-login-local" class="btn text-left rounded-pill btn-primary m-1 px-3" [disabled]="loginForm.invalid"
-                    (click)="signin(cred)">
-                  Log In</button>
-                  <button id="btn-signup-local" class="btn text-left rounded-pill btn-outline-secondary m-1 px-3" (click)="register=true">
-                  Sign Up</button>
-                </div>
-              }
-              @if (register) {
+              <input id="input-signup-password" class="form-control rounded-50 my-1 w-unset" type="password" name="password"
+                [(ngModel)]="cred.password" placeholder="Password" required>
+
+              <!-- <div class="position-relative">
+                <div style="position:absolute; right:10px; top:8px; cursor: pointer;">
+                  @if (passwordType=='password'){
+                      <fa-icon [icon]="['far','eye']" (click)="passwordType='text'" [fixedWidth]="true"></fa-icon>
+                  }@else {
+                      <fa-icon [icon]="['far','eye-slash']" (click)="passwordType='password'" [fixedWidth]="true"></fa-icon>
+                  }
+                </div>  
+      
+                <input id="input-signup-password" class="form-control rounded-50 my-1 w-unset" [type]="passwordType" name="password"
+                [(ngModel)]="cred.password" placeholder="Password" required>
+              </div> -->
+      
+
+
+              </div>
+              @if (!register) {
                 <div class="text-center d-flex justify-content-between">
-                  <button id="btn-cancel-local" class="btn text-left rounded-pill btn-outline-secondary my-1 px-3"
-                    (click)="register=false">
-                  Cancel</button>
-                  <button id="btn-signup-local" class="btn text-left rounded-pill btn-primary my-1 px-3" [disabled]="loginForm.invalid"
-                    (click)="signup(cred)">
-                  Sign Up</button>
-                </div>
-              }
-            </form>
-          </div>
-        }
-        @if (app.x?.privPol) {
-          <div class="small m-2 text-center">By signing in, you agree to <br /> our <a [href]="app.x?.privPol"
-          target="_blank">Privacy Policy</a></div>
-        }
-      </div>
-    }
+                  <!-- <button class="btn text-left rounded-pill btn-outline-secondary my-1 px-3" (click)="register=true"
+                  tabindex="-1">
+                Signup</button>
+                <button class="btn text-left rounded-pill btn-primary my-1 px-3" [disabled]="loginForm.invalid"
+                  (click)="signin(cred)">
+                Login</button> -->
+                <button id="btn-login-local" class="btn text-left rounded-pill btn-primary m-1 px-3" [disabled]="loginForm.invalid"
+                  (click)="signin(cred)">
+                Log In</button>
+                <button id="btn-signup-local" class="btn text-left rounded-pill btn-outline-secondary m-1 px-3" (click)="register=true">
+                Sign Up</button>
+              </div>
+            }
+            @if (register) {
+              <div class="text-center d-flex justify-content-between">
+                <button id="btn-cancel-local" class="btn text-left rounded-pill btn-outline-secondary my-1 px-3"
+                  (click)="register=false">
+                Cancel</button>
+                <button id="btn-signup-local" class="btn text-left rounded-pill btn-primary my-1 px-3" [disabled]="loginForm.invalid"
+                  (click)="signup(cred)">
+                Sign Up</button>
+              </div>
+            }
+          </form>
+        </div>
+      }
+      @if (app.x?.privPol) {
+        <div class="small m-2 text-center">By signing in, you agree to <br /> our <a [href]="app.x?.privPol"
+        target="_blank">Privacy Policy</a></div>
+      }
+    </div>
+  }

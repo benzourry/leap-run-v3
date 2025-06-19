@@ -131,112 +131,112 @@
                   </div>
                   <div class="app-menu">
                     @for (group of navis; track $index) {
-                      @if (preCheck(group)) {
+                      @if (preGroup[group.id]) {
                         <div class="menu">
                           <div class="menu-heading d-flex justify-content-between align-items-center px-3"
                             (click)="navToggle={};navToggle[$index]=!navToggle[$index]"
                             [class.active]="navToggle[$index]">
                             {{group.title}}
-                            <fa-icon class="ms-1" [icon]="['fas',navToggle[$index]?'angle-up':'angle-down']"
+                            <fa-icon class="ms-1"
+                              [icon]="['fas',navToggle[$index]?'angle-up':'angle-down']"
                             [fixedWidth]="true"></fa-icon>
                           </div>
                           @if (navToggle[$index]) {
                             <div class="menu-items mb-1">
                               @for (item of group.items; track $index) {
-                                <!-- <ng-container
-                                *ngIf="!naviData[item.type+'-'+item.screenId]?.access||naviData[item.type+'-'+item.screenId]?.access?.users?.indexOf(user.email)>-1"> -->
-                                <!-- Precheck:{{preCheck(item)}} -->
-                                @if ((naviData[item.type+'-'+item.screenId] || ['external','internal','user','start'].indexOf(item.type)>-1) && preCheck(item)) {
+                                @let naviDataItem = naviData[item.type+'-'+item.screenId];
+                                @if ((naviDataItem || ['external','internal','user','start'].indexOf(item.type)>-1) && preItem[item.id]) {
                                   <div>
                                     @if (item.type=='form') {
-                                      <!-- @if (naviData[item.type+'-'+item.screenId]?.access?.users?.indexOf(user.email)>-1) { -->
+                                      <!-- @if (naviDataItem?.access?.users?.indexOf(user.email)>-1) { -->
                                         <a routerLink="{{preurl}}/form/{{item.screenId}}/add"
                                           [skipLocationChange]="item.x?.slc"
                                           (click)="hideSb()"
-                                          [class.disabled]="offline || naviData[item.type+'-'+item.screenId]?.inactive"
+                                          [class.disabled]="offline || naviDataItem?.inactive"
                                           routerLinkActive="active">
-                                          <fa-icon [icon]="getIcon(item.icon)" [fixedWidth]="true"></fa-icon>
-                                          {{item.title}}
+                                          <fa-icon [icon]="getIcon(item.icon)"
+                                          [fixedWidth]="true"></fa-icon>
+                                          <div class="menu-text">{{item.title}}</div>
                                         </a>
                                       <!-- } -->
                                     }
                                     @if (item.type=='form-single') {
-                                      <!-- @if (naviData[item.type+'-'+item.screenId]?.access?.users?.indexOf(user.email)>-1) { -->
+                                      <!-- @if (naviDataItem?.access?.users?.indexOf(user.email)>-1) { -->
                                         <a routerLink="{{preurl}}/form/{{item.screenId}}/edit-single"
                                           [skipLocationChange]="item.x?.slc"
                                           (click)="hideSb()"
-                                          [class.disabled]="offline || naviData[item.type+'-'+item.screenId]?.inactive"
+                                          [class.disabled]="offline || naviDataItem?.inactive"
                                           routerLinkActive="active">
-                                          <fa-icon [icon]="getIcon(item.icon)" [fixedWidth]="true"></fa-icon>
-                                          {{item.title}}
+                                          <fa-icon [icon]="getIcon(item.icon)"
+                                          [fixedWidth]="true"></fa-icon>
+                                          <div class="menu-text">{{item.title}}</div>
                                         </a>
                                       <!-- } -->
                                     }
                                     @if (item.type=='view-single') {
-                                      <!-- @if (naviData[item.type+'-'+item.screenId]?.access?.users?.indexOf(user.email)>-1) { -->
+                                      <!-- @if (naviDataItem?.access?.users?.indexOf(user.email)>-1) { -->
                                         <a routerLink="{{preurl}}/form/{{item.screenId}}/view"
                                           [skipLocationChange]="item.x?.slc"
                                           (click)="hideSb()"
-                                          [class.disabled]="offline || naviData[item.type+'-'+item.screenId]?.inactive"
+                                          [class.disabled]="offline || naviDataItem?.inactive"
                                           routerLinkActive="active">
-                                          <fa-icon [icon]="getIcon(item.icon)" [fixedWidth]="true"></fa-icon>
-                                          {{item.title}}
+                                          <fa-icon [icon]="getIcon(item.icon)"
+                                          [fixedWidth]="true"></fa-icon>
+                                          <div class="menu-text">{{item.title}}</div>
                                         </a>
                                       <!-- } -->
                                     }
                                     @if (item.type=='dataset') {
                                       <a routerLink="{{preurl}}/dataset/{{item.screenId}}"
+                                        [routerLinkActiveOptions]="{exact: true}"
                                         [skipLocationChange]="item.x?.slc"
-                                        (click)="hideSb()"
-                                        routerLinkActive="active">
+                                        (click)="hideSb()" routerLinkActive="active">
                                         <fa-icon [icon]="getIcon(item.icon)" [fixedWidth]="true"></fa-icon>
-                                        {{item.title}}
+                                        <div class="menu-text">{{item.title}}</div>
                                       </a>
                                     }
                                     @if (item.type=='dashboard') {
                                       <a routerLink="{{preurl}}/dashboard/{{item.screenId}}"
+                                        [routerLinkActiveOptions]="{exact: true}"
                                         [skipLocationChange]="item.x?.slc"
                                         (click)="hideSb()" routerLinkActive="active">
-                                        <fa-icon [icon]="getIcon(item.icon)" [fixedWidth]="true">
-                                        </fa-icon>
-                                        {{item.title}}
+                                        <fa-icon [icon]="getIcon(item.icon)" [fixedWidth]="true"></fa-icon>
+                                        <div class="menu-text">{{item.title}}</div>
                                       </a>
                                     }
                                     @if (item.type=='lookup') {
                                       <a routerLink="{{preurl}}/lookup/{{item.screenId}}"
+                                        [routerLinkActiveOptions]="{exact: true}"
                                         [skipLocationChange]="item.x?.slc"
-                                        (click)="hideSb()"
-                                        routerLinkActive="active">
-                                        <fa-icon [icon]="getIcon(item.icon)" [fixedWidth]="true">
-                                        </fa-icon>
-                                        {{item.title}}
-                                      </a>
-                                    }
-                                    @if (item.type=='external' || item.type=='internal') {
-                                      <a [href]="compileTpl(item.url,{$this$:$this$,$user$:user,$baseUrl$:baseUrl})"
-                                        [target]="item.type=='external'?'_blank':''">
+                                        (click)="hideSb()" routerLinkActive="active">
                                         <fa-icon [icon]="getIcon(item.icon)" [fixedWidth]="true"></fa-icon>
-                                        {{item.title}}
+                                        <div class="menu-text">{{item.title}}</div>
                                       </a>
                                     }
                                     @if (item.type=='screen') {
                                       <a routerLink="{{preurl}}/screen/{{item.screenId}}"
+                                        [routerLinkActiveOptions]="{exact: true}"
                                         [skipLocationChange]="item.x?.slc"
-                                        (click)="hideSb()"
-                                        routerLinkActive="active">
-                                        <fa-icon [icon]="getIcon(item.icon)" [fixedWidth]="true">
-                                        </fa-icon>
-                                        {{item.title}}
+                                        (click)="hideSb()" routerLinkActive="active">
+                                        <fa-icon [icon]="getIcon(item.icon)" [fixedWidth]="true"></fa-icon>
+                                        <div class="menu-text">{{item.title}}</div>
                                       </a>
                                     }
                                     @if (item.type=='user') {
                                       <a routerLink="{{preurl}}/user/{{item.screenId}}"
+                                        [routerLinkActiveOptions]="{exact: true}"
                                         [skipLocationChange]="item.x?.slc"
-                                        (click)="hideSb()"
-                                        routerLinkActive="active">
-                                        <fa-icon [icon]="getIcon(item.icon)" [fixedWidth]="true">
-                                        </fa-icon>
-                                        {{item.title}}
+                                        (click)="hideSb()" routerLinkActive="active">
+                                        <fa-icon [icon]="getIcon(item.icon)" [fixedWidth]="true"></fa-icon>
+                                        <div class="menu-text">{{item.title}}</div>
+                                      </a>
+                                    }                                    
+                                    @if (item.type=='external' || item.type=='internal') {
+                                      <a [href]="compileTpl(item.url,{$this$:$this$,$user$:user, $conf$:runService.appConfig,$base$:base, $baseUrl$:baseUrl, $baseApi$:baseApi})"
+                                        [target]="item.type=='external'?'_blank':''">
+                                        <fa-icon [icon]="getIcon(item.icon)"
+                                        [fixedWidth]="true"></fa-icon>
+                                        <div class="menu-text">{{item.title}}</div>
                                       </a>
                                     }
                                     @if (item.type=='start') {
@@ -245,7 +245,7 @@
                                         (click)="hideSb()" routerLinkActive="active">
                                         <fa-icon [icon]="getIcon(item.icon)" [fixedWidth]="true">
                                         </fa-icon>
-                                        {{item.title}}
+                                        <div class="menu-text">{{item.title}}</div>
                                       </a>
                                     }
                                   </div>
@@ -256,10 +256,6 @@
                         </div>
                       }
                     }
-                    <!-- <div class="dark-mode-toggle text-end" (click)="toggleDark()">
-                    <fa-icon [icon]="['fas',darkMode?'toggle-on':'toggle-off']" [fixedWidth]="true"></fa-icon>
-                      {{app.x?.lang=='ms'?'Mod Gelap':'Dark Mode'}}
-                    </div> -->
                     <div class="clearfix"></div>
                   </div>
                 </div>
