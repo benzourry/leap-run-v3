@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with LEAP.  If not, see <http://www.gnu.org/licenses/>.
 
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 // import { RunService } from '../service/run.service';
 import { baseApi, domainBase, domainRegex, OAUTH } from '../_shared/constant.service';
@@ -36,20 +36,24 @@ import { RunService } from '../run/_service/run.service';
 })
 export class LoginComponent implements OnInit {
 
+  private route = inject(ActivatedRoute)
+  private runService = inject(RunService)
+  private userService = inject(UserService)
+  private titleService = inject(Title)
+  private meta = inject(Meta)
+
   redirect: string = '';
-  app: any;
+  app = signal<any>(null);
   baseApi: string = baseApi;
 
-  loginList: any[] = [];
+  loginList = signal<any[]>([]);
 
-  useEmail: boolean = false;
   cred: any = {};
   privacyPolicy: string = OAUTH.PRIVACY_POLICY;
 
   passwordType:string="password";
 
-  constructor(private route: ActivatedRoute, private runService: RunService, private userService: UserService,
-    private titleService: Title, private meta: Meta) { }
+  constructor() { }
 
 
   ngOnInit() {
@@ -60,51 +64,53 @@ export class LoginComponent implements OnInit {
     this.runService.getRunAppByPath(this.getPath())
       .subscribe(res => {
         this.buildLoginList(res);
-        this.app = res;
+        this.app.set(res);
         this.runService.$app.set(this.app);
-        this.titleService.setTitle('Login ' + this.app.title);
-        let desc = this.app.title;
-        if (this.app?.description){
-          desc = this.app?.description;
+        this.titleService.setTitle('Login ' + res.title);
+        let desc = res.title;
+        if (res.description){
+          desc = res.description;
         }
         this.meta.addTag({name:'description', content: desc})
       })
   }
 
   buildLoginList(app) {
+    let loginList = []
     if (app.useSarawakid) {
-      this.loginList.push({ icon: ['far', 'circle-user'], text: 'Login with SarawakID', key: 'sarawakid' });
+      loginList.push({ icon: ['far', 'circle-user'], text: 'Login with SarawakID', key: 'sarawakid' });
     }
     if (app.useUnimasid) {
-      this.loginList.push({ icon: ['fas', 'university'], text: 'Login with UNIMAS ID', key: 'unimasid' });
+      loginList.push({ icon: ['fas', 'university'], text: 'Login with UNIMAS ID', key: 'unimasid' });
     }
     if (app.useUnimas) {
-      this.loginList.push({ icon: ['fas', 'university'], text: 'Login with UNIMAS ID (v1)', key: 'unimas' });
+      loginList.push({ icon: ['fas', 'university'], text: 'Login with UNIMAS ID (v1)', key: 'unimas' });
     }
     if (app.useIcatsid) {
-      this.loginList.push({ icon: ['fas', 'university'], text: 'Login with i-CATS Identity', key: 'icatsid' });
+      loginList.push({ icon: ['fas', 'university'], text: 'Login with i-CATS Identity', key: 'icatsid' });
     }
     if (app.useSsone) {
-      this.loginList.push({ icon: ['fas', 'university'], text: 'Login with ssOne', key: 'ssone' });
+      loginList.push({ icon: ['fas', 'university'], text: 'Login with ssOne', key: 'ssone' });
     }
     if (app.useGoogle) {
-      this.loginList.push({ icon: ['fab', 'google'], text: 'Login with Google', key: 'google' });
+      loginList.push({ icon: ['fab', 'google'], text: 'Login with Google', key: 'google' });
     }
     if (app.useAzuread) {
-      this.loginList.push({ icon: ['fab', 'microsoft'], text: 'Login with Microsoft', key: 'azuread' });
+      loginList.push({ icon: ['fab', 'microsoft'], text: 'Login with Microsoft', key: 'azuread' });
     }
     if (app.useFacebook) {
-      this.loginList.push({ icon: ['fab', 'facebook-f'], text: 'Login with Facebook', key: 'facebook' });
+      loginList.push({ icon: ['fab', 'facebook-f'], text: 'Login with Facebook', key: 'facebook' });
     }
     if (app.useTwitter) {
-      this.loginList.push({ icon: ['fab', 'twitter'], text: 'Login with Twitter', key: 'twitter' });
+      loginList.push({ icon: ['fab', 'twitter'], text: 'Login with Twitter', key: 'twitter' });
     }
     if (app.useGithub) {
-      this.loginList.push({ icon: ['fab', 'github'], text: 'Login with GitHub', key: 'github' });
+      loginList.push({ icon: ['fab', 'github'], text: 'Login with GitHub', key: 'github' });
     }
     if (app.useLinkedin) {
-      this.loginList.push({ icon: ['fab', 'linkedin'], text: 'Login with LinkedIn', key: 'linkedin' });
+      loginList.push({ icon: ['fab', 'linkedin'], text: 'Login with LinkedIn', key: 'linkedin' });
     }
+    this.loginList.set(loginList);
   }
 
   getPath() {
@@ -121,16 +127,16 @@ export class LoginComponent implements OnInit {
   login(server) {
     window.localStorage.setItem('server', server);
     window.localStorage.setItem('redirect', this.redirect); 
-    window.localStorage.setItem('appId',this.app.id);
-    location.href = `${OAUTH.AUTH_URI}/${server}?appId=${this.app.id}&redirect_uri=${encodeURIComponent(OAUTH.CALLBACK)}`;
+    window.localStorage.setItem('appId',this.app().id);
+    location.href = `${OAUTH.AUTH_URI}/${server}?appId=${this.app().id}&redirect_uri=${encodeURIComponent(OAUTH.CALLBACK)}`;
   }
 
-  register = false;
-  error: any;
+  register = signal<boolean>(false);
+  error = signal<any>(null);
   signin(data) {
-    data.appId=this.app.id;
-    if (this.app.x?.userFromApp){
-      data.appId = this.app.x?.userFromApp;
+    data.appId=this.app().id;
+    if (this.app().x?.userFromApp){
+      data.appId = this.app().x?.userFromApp;
     }
     this.userService.login(data)
     .subscribe({
@@ -149,51 +155,51 @@ export class LoginComponent implements OnInit {
                   location.href = window.localStorage.getItem("redirect") ? "/#" + window.localStorage.getItem("redirect") : OAUTH.FINAL_URI;
                 } else {
                   alert(json.error);
-                  this.error = json.error;
+                  this.error.set(json.error);
                 }
 
               });
             });
 
         } else {
-          this.error = {message:"Problem authenticating"};
+          this.error.set({message:"Problem authenticating"});
           alert("Problem authenticating");
         }
       },
       error:(err)=>{
-        this.error = err.error;
+        this.error.set(err.error);
       }
     });
   }
 
-  message:string;
+  message = signal<string>(null);
   reset(email){
-    this.userService.resetPwd(email,this.app.id)
+    this.userService.resetPwd(email,this.app().id)
     .subscribe({
       next: (res)=>{
-        this.message = res.message;
-        this.error = false;
+        this.message.set(res.message);
+        this.error.set(false);
       },
       error: (err)=>{
-        this.error = err.error;
+        this.error.set(err.error);
       }
     })
   }
 
   signup(data) {
-    data.appId=this.app.id;
-    if (this.app.x?.userFromApp){
-      data.appId = this.app.x?.userFromApp;
+    data.appId=this.app().id;
+    if (this.app().x?.userFromApp){
+      data.appId = this.app().x?.userFromApp;
     }
     this.userService.register(data)
       .subscribe({
         next: (res)=>{
-          this.message = res.message;
-          this.register = false;
-          this.error = false;
+          this.message.set(res.message);
+          this.register.set(false);
+          this.error.set(false);
         },
         error: (err)=>{
-          this.error = err.error;
+          this.error.set(err.error);
         }
       })
   }

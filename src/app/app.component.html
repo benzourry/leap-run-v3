@@ -1,4 +1,4 @@
-@if (appLoading) {
+@if (appLoading()) {
   <div class="p-5 text-centered">
     <div class="lds-ellipsis">
       <div></div>
@@ -7,30 +7,29 @@
       <div></div>
     </div>
   </div>
-}
-@if (!appLoading) {
-  @if (updateAvailable) {
+}@else{
+  @if (updateAvailable()) {
     <div style="background:red;padding:1em; color: white; font-size: .9em" (click)="reload()">
       Update available! Click this message to update
     </div>
   }
-  @if (offline) {
+  @if (offline()) {
     <div style="background:red;padding:1em; color: white; font-size: .9em">
       You are currently offline. Data might be outdated and some of the feature will be disabled.
     </div>
   }
-  @if (!serverDown) {
-    @if (!pathExist) {
+  @if (!serverDown()) {
+    @if (!pathExist()) {
       <div class="text-centered">
         <div class="pt-5 text-muted">
           <fa-icon [icon]="['fas','exclamation-triangle']" [fixedWidth]="true" size="5x"></fa-icon>
         </div>
         <div class="p-5 text-danger">
-          <h3>App with path <strong>{{path}}</strong> doesn't exist</h3>
+          <h3>App with path <strong>{{path()}}</strong> doesn't exist</h3>
         </div>
       </div>
     }
-    @if (pathExist) {
+    @if (pathExist()) {
       <router-outlet></router-outlet>
     }
   } @else {

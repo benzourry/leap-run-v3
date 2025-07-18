@@ -15,52 +15,43 @@
 // You should have received a copy of the GNU General Public License
 // along with LEAP.  If not, see <http://www.gnu.org/licenses/>.
 
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { PlatformLocation } from '@angular/common';
 import { withLatestFrom } from 'rxjs/operators';
-import { FormComponent } from './form.component';
-import { ComponentCanDeactivate } from '../../_shared/service/can-deactivate-guard.service';
-import { PageTitleComponent } from '../_component/page-title.component';
-import { convertQueryParams } from '../../_shared/utils';
+import { ViewComponent } from './view.component';
 
 @Component({
   selector: 'app-form-web',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-  <app-form 
+  <app-view 
     [formId]="formId()"
     [action]="action()"
     [param]="param()" 
     (formLoaded)="formLoaded($event)"
     [navIndex]="navIndex()"
     [entryId]="entryId()">
-  </app-form>`,
+  </app-view>
+  `,
   styleUrls: [],
   standalone: true,
   imports: [
-    FormComponent
+    ViewComponent
   ]
 })
-export class FormWebComponent implements OnInit, ComponentCanDeactivate  {
+export class ViewWebComponent implements OnInit  {
 
   entryId = signal<number>(null); // PERLU CHECK
 
-  action = signal<string>('');
-  
+  action = signal<string>('view');  
   formId = signal<number>(null);
-
-  form = signal<any>({})
-  
+  form = signal<any>({});
   param = signal<any>({});
-
   navIndex = signal<number>(0);
 
   private route = inject(ActivatedRoute)
 
-  private location = inject(PlatformLocation);
-
-  constructor() {}
+  constructor() { }
 
   ngOnInit() {
 
@@ -69,19 +60,11 @@ export class FormWebComponent implements OnInit, ComponentCanDeactivate  {
     ).subscribe(([, params, queryParams]) => {
       this.formId.set(params['formId']);
       this.action.set(params['action']);
-
-      const convertedQueryParams = queryParams;
-      this.param.set(convertedQueryParams);
-      this.navIndex.set(queryParams['navIndex'] ? +queryParams['navIndex'] : 0);
+      this.param.set(queryParams);
+      this.navIndex.set(queryParams['navIndex'] ?? 0);
       // this.tab = queryParams['tab'] ?? 0; dh da navIndex dlm FormComponent yg extract dari params
       this.entryId.set(queryParams['entryId']);
     })
-  }
-
-  formComp = viewChild(FormComponent);
-  
-  canDeactivate() {
-    return this.formComp().canDeactivate(); //asknavigate && dirty --> modal
   }
 
   formLoaded(form: any) {

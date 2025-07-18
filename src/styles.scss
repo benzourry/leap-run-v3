@@ -11,13 +11,14 @@
 // @import "@fullcalendar/daygrid/main.css";
 // @import "@fullcalendar/timegrid/main.css";
 // @import 'prismjs/themes/prism.css';
-@use "bootstrap/scss/bootstrap.scss";
+/* Importing Bootstrap SCSS file. */
+@use "bootstrap/scss/bootstrap" with (
+  $enable-negative-margins: true
+);
 @use "assets/css/print.css";
 @use "leaflet/dist/leaflet.css";
 
-@use '@fontsource/inter';
-
-$enable-negative-margins:true !default;
+@use "@fontsource/inter";
 
 html,
 body {
@@ -60,6 +61,7 @@ body {
 }
 .bg-reka.ia-unimas-my,
 .bg-reka.ireka-my,
+.bg-reka.dev-ireka-my,
 .bg-reka.aa-unimas-my{
   background-color: #0747a6;
 }

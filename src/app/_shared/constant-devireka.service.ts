@@ -19,21 +19,23 @@ import { RxStompConfig } from "@stomp/rx-stomp";
 
 var full = location.protocol + '//' + location.hostname + (location.port ? ':' + location.port : '');
 
-// // /* KBORNEO */
-export const baseApi = 'https://io.kborneo.my/api';   // prefer
-export const base = 'https://io.kborneo.my'; // prefer
+/* IREKA UNIMAS */
+export const baseApi = 'https://rekapi.unimas.my/ia/api';   // prefer
+export const base = 'https://rekapi.unimas.my/ia'; // prefer
 
-export const domainRegex = /(?:http[s]*\:\/\/)*(.*?)\.(?=[^\/]*\.)?kborneo\.my/;
-export const domainBase = "kborneo.my"; 
+export const domainRegex = /(?:http[s]*\:\/\/)*(.*?)\.(?=[^\/]*\.)?dev\.ireka\.my/;
+export const domainBase = "dev.ireka.my";
+
 export const OAUTH = {
-        AUTH_URI : "https://io.kborneo.my/oauth2/authorize",
-        LOGOUT_URI : "https://io.kborneo.my/logout",
-        USER_URI : "https://io.kborneo.my/user/me",
-        CALLBACK : full + "/#/" ,
+        AUTH_URI: "https://rekapi.unimas.my/ia/oauth2/authorize",
+        LOGOUT_URI: "https://rekapi.unimas.my/ia/logout",
+        USER_URI: "https://rekapi.unimas.my/ia/user/me",
+        CALLBACK: full + "/#/", // + "/assets/o-callback.html",
         FINAL_URI: full + "/#/",
-        TOKEN_GET: "https://io.kborneo.my/token/get",
-        PRIVACY_POLICY: "https://1drv.ms/b/s!AotEjBTyvtX0gq4fj9Ry8MLD1iskng?e=9SZVb2"
+        TOKEN_GET: "https://rekapi.unimas.my/ia/token/get",
+        PRIVACY_POLICY: "https://1drv.ms/b/s!AotEjBTyvtX0guMI71FGGK2CC0siIw?e=E0o5H5"
 }
+
 
 export const myRxStompConfig: RxStompConfig = {
         brokerURL: 'wss://io.ireka.my/ping/ws',

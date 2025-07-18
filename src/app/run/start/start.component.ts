@@ -15,124 +15,162 @@
 // You should have received a copy of the GNU General Public License
 // along with LEAP.  If not, see <http://www.gnu.org/licenses/>.
 
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { UserService } from '../../_shared/service/user.service';
-import { ActivatedRoute, Params, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Params, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { UtilityService } from '../../_shared/service/utility.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PlatformLocation, NgClass, NgStyle } from '@angular/common';
 import { baseApi, domainRegex, domainBase, base } from '../../_shared/constant.service';
 import { Title } from '@angular/platform-browser';
-// import { RunService } from '../../service/run.service';
 import { Subscription, lastValueFrom } from 'rxjs';
 import { PageTitleService } from '../../_shared/service/page-title-service';
-import { ServerDate, compileTpl, deepMerge, getQuery, loadScript } from '../../_shared/utils';
+import { ServerDate, compileTpl, createProxy, deepMerge, getQuery, loadScript } from '../../_shared/utils';
 import { LogService } from '../../_shared/service/log.service';
 import { SwPush } from '@angular/service-worker';
 import { PushService } from '../../_shared/service/push.service';
-import { first, map, take, tap } from 'rxjs/operators';
+import { filter, first, take, tap } from 'rxjs/operators';
 import { SafePipe } from '../../_shared/pipe/safe.pipe';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-// import { PageTitleComponent } from '../../_shared/component/page-title.component';
 import { RegisterComponent } from '../register/register.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HttpClient } from '@angular/common/http';
-import { RxStompService } from '../../_shared/service/rx-stomp.service';
+import dayjs from 'dayjs';
 import { ToastService } from '../../_shared/service/toast-service';
-// import { EntryService } from '../../service/entry.service';
-import * as dayjs from 'dayjs';
 import { PageTitleComponent } from '../_component/page-title.component';
 import { EntryService } from '../_service/entry.service';
 import { RunService } from '../_service/run.service';
-// import { BrowserQRCodeReader } from '@zxing/library';
-// declare const qrcode: any;
-// declare const zdecoder: any;
 
 @Component({
-    selector: 'app-start',
-    templateUrl: './start.component.html',
-    styleUrls: ['./start.component.scss'],
-    imports: [RegisterComponent, PageTitleComponent, NgClass, NgStyle, RouterLink, FaIconComponent, RouterLinkActive, RouterOutlet, SafePipe]
+  selector: 'app-start',
+  templateUrl: './start.component.html',
+  styleUrls: ['./start.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, FaIconComponent, RegisterComponent, PageTitleComponent, NgClass, NgStyle, RouterLinkActive, RouterOutlet, SafePipe]
 })
-export class StartComponent implements OnInit {
-  appLoading: boolean;
-  validPath: boolean;
-  baseApi = baseApi;
-  base = base;
-  readonly VAPID_PUBLIC_KEY = "BIRiQCpjtaORtlvwZ7FzFkf8V799iGvEX1kQtO86y-BdiGpAMvXN4UDU1DWEqrpPEAiDDVilG8WKk62NjFc1Opo";
+export class StartComponent implements OnInit, OnDestroy {
 
 
+  private userService = inject(UserService);
+  private swPush = inject(SwPush);
+  private pushService = inject(PushService);
+  private runService = inject(RunService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private utilityService = inject(UtilityService);
+  private modalService = inject(NgbModal);
+  private location = inject(PlatformLocation);
+  private titleService = inject(Title);
+  private pageTitleService = inject(PageTitleService);
+  private http = inject(HttpClient);
+  private toastService = inject(ToastService);
+  private logService = inject(LogService);
+  private entryService = inject(EntryService);
+  private cdr = inject(ChangeDetectorRef);
 
-  constructor(private userService: UserService, private swPush: SwPush, private pushService: PushService,
-    private runService: RunService, private router: Router, private route: ActivatedRoute, private utilityService: UtilityService, private modalService: NgbModal,
-    private location: PlatformLocation, private titleService: Title, private pageTitleService: PageTitleService,
-    private http: HttpClient, private toastService: ToastService,
-    private cdr: ChangeDetectorRef,private entryService: EntryService, private rxStompService: RxStompService,
-    private logService: LogService) {
-    location.onPopState(() => this.modalService.dismissAll(''));
-    this.utilityService.testOnline$().subscribe(online => this.offline = !online);
-    this.swPush.notificationClicks.subscribe(arg => {
+  // Signals for state management
+  appLoading = signal<boolean>(false);
+  validPath = computed(() => !!this.app());
+  offline = signal<boolean>(false);
+  sidebarActive = signal<boolean>(false);
+  frameless = computed(() => (getQuery('noframe') || localStorage.getItem('noframe')) === 'true');
+  pushDismissed = computed(() => localStorage.getItem('pushDismissed') === '1');
+  maintenance = computed(() => {
+    const app = this.app();
+    const path = this.getPath();
+    return !this.editMode && !!app && !app.live && !path.includes('--dev');
+  });
+  darkMode = signal<boolean>(false);
+  app = signal<any>(null);
+  user = signal<any>(null);
+  navis = signal<any[]>([]);
+  naviData = signal<any>(null);
+  appUserList = signal<any[]>([]);
+  liveSubscription = signal<Record<string, any>>({});
+  preGroup = signal<Record<string, boolean>>({});
+  preItem = signal<Record<string, boolean>>({});
+  navToggle = signal<Record<number, boolean>>({});
+  appConfig: any = this.runService.appConfig;
+  // baseUrl = signal<string>('');
+  baseUrl = computed(() => {
+    return (
+      location.protocol +
+      '//' +
+      location.hostname +
+      (location.port ? ':' + location.port : '') +
+      '/#' +
+      this.preurl
+    );
+  });
+  startPage = computed(() => this.app()?.startPage ?? 'start');
+  // isDev = computed(() => this.app()?.email.indexOf(this.userService.getActualUser().email) > -1);
+  screen = signal<any>(null);
+
+  readonly baseApi = baseApi;
+  readonly base = base;
+  readonly VAPID_PUBLIC_KEY =
+    'BIRiQCpjtaORtlvwZ7FzFkf8V799iGvEX1kQtO86y-BdiGpAMvXN4UDU1DWEqrpPEAiDDVilG8WKk62NjFc1Opo';
+
+  firstActiveSet: boolean = false;
+
+  editMode: boolean = false;
+  badge: any;
+  active = false;
+  path: string;
+
+  preurl: string = '';
+  appId: number;
+  subscription: Subscription;
+  getIcon = (str) => str ? str.split(":") : ['far', 'file'];
+  $param$: any = {};
+  accessToken: string = '';
+  pushSub: any;
+  actualSub: any;
+  pushSubError: any;
+  appUrl: string = '';
+
+  _this = createProxy({}, () => this.cdr.markForCheck());
+
+  constructor() {
+    this.location.onPopState(() => this.modalService.dismissAll(''));
+    this.utilityService.testOnline$().subscribe((online) => this.offline.set(!online));
+    this.swPush.notificationClicks.subscribe((arg) => {
       console.log(
         'Action: ' + arg.action,
         'Notification data: ' + arg.notification.data,
         'Notification data.url: ' + arg.notification.data.url,
-        'Notification data.body: ' + arg.notification.body,
+        'Notification data.body: ' + arg.notification.body
       );
     });
   }
 
-
-  user: any;
-  // formList: any;
-  badge: any;
-  app: any;
-  // searchText: string = "";
-  active = false;
-  path: string;
-  pushDismissed:boolean;
-  // logs: any[];
-
-  navToggle: any = { 0: true };
-
-  offline = false;
-
-  naviData: any = {}
-
-  navis: any;
-
-  preurl: string = '';
-  appId: number;
-
-  subscription: Subscription;
-  sidebarActive: boolean = false;
-  editMode: boolean = false;
-  frameless: boolean = false;
-
-  appUserList: any[];
-
-  getIcon = (str) => str ? str.split(":") : ['far', 'file'];
-
-  $param$: any = {};
-
-  accessToken:string='';
-
-  liveSubscription: any[] = [];
-
-  appUrl:string ='';
-
   ngOnInit() {
 
-    // console.log("start-init");
-    this.frameless = (getQuery("noframe") || window.localStorage.getItem("noframe")) == 'true';
-    window.localStorage.setItem("noframe", this.frameless + '');
-
-
-    this.pushDismissed = localStorage.getItem("pushDismissed")=='1';
+    window.localStorage.setItem('noframe', this.frameless() + '');
 
     this.accessToken = this.userService.getToken();
 
+    this.appConfig = this.runService.appConfig;
+
+    Object.defineProperty(window, '_conf', {
+      get: () => this.appConfig,
+      // value: this.appConfig,
+      configurable: true,   // so you can delete it later 
+      // writable: true,
+    });  
+    Object.defineProperty(window, '_this_start', {
+      get: () => this._this,
+      // value: this._this,
+      configurable: true,   // so you can delete it later 
+      // writable: true,
+    });  
+
     this.userService.getUser()
       .subscribe((user) => {
-        this.user = user;
+        this.user.set(user);
+        this.userService.setUser(user);
+        this.runService.$user.set(user);
+        // console.log("loaded user", user)
+
         this.route.params
           .subscribe((params: Params) => {
             this.$param$ = params;
@@ -142,70 +180,74 @@ export class StartComponent implements OnInit {
               this.runService.$preurl.set(this.preurl);
               this.getApp(this.appId);
 
-              // ONLY RUN IN DESIGN TO MIMICK ACTUAL USER FOR APP
-              // var runas = prompt("Run preview as (email): ", user.email);
-              // if (runas) {
-              //   this.userService.getUserDebug(runas, this.appId)
-              //     .subscribe(user_debug => {
-              //       this.user = user_debug;
-              //     })
-              // }
-              ////////////
-              if (!this.frameless) {
-                this.getNavis(this.appId, this.user.email);
-                this.getNaviData(this.appId, this.user.email);
+              if (!this.frameless()) {
+                this.getNavis(this.appId, this.user().email);
+                this.getNaviData(this.appId, this.user().email);
               }
-              // this.getStart(this.appId);
-              // this.editMode = true;
-              // this.getDesignUrl();
+              this.editMode = true;
             } else {
               this.getAppByPath(this.getPath());
             }
-            this.baseUrl = (location.protocol + '//' + location.hostname + (location.port ? ':' + location.port : '')) + '/#' + this.preurl;
           });
       })
 
     this.subscription = this.pageTitleService.openAnnounced$.subscribe(
       opened => {
-        this.sidebarActive = opened
+        this.sidebarActive.set(opened)
       }
     )
+
+    this.router.events
+    .pipe(filter(event => event instanceof NavigationEnd))
+    .subscribe((event: NavigationEnd) => {
+      // Check if navigated to root
+      if (this.router.url === '/' || this.router.url === '') {
+        // Wait for app() to be available, or use a fallback
+        const startPage = this.app()?.startPage || 'start';
+        // Prevent infinite loop if already at startPage
+        if (this.router.url !== `/${startPage}`) {
+          this.router.navigate([startPage], {
+            relativeTo: this.route,
+            queryParams: this.route.snapshot.queryParams,
+            replaceUrl: true // Optional: replaces history entry
+          });
+        }
+      }
+    });
+
   }
 
-  dismissPush(){
-    localStorage.setItem("pushDismissed","1");
-    this.pushDismissed = true;
+
+
+  dismissPush() {
+    localStorage.setItem("pushDismissed", "1");
+    // this.pushDismissed.set(true);
+  }
+
+  toggleNav(index: number): void {
+    const currentState = this.navToggle();
+    this.navToggle.set({ ...currentState, [index]: !currentState[index] });
   }
 
   saveAppUser(selectedRoles) {
     var payload = {
-      email: this.user.email,
+      email: this.user().email,
       groups: selectedRoles,
       name: this.user.name,
       autoReg: false
     }
-    this.runService.regAppUser(this.app.id, payload)
+    this.runService.regAppUser(this.app().id, payload)
       .subscribe(res => {
-        this.user = res.user;
+        this.user.set(res.user);
         this.userService.setUser(res.user);
-        if (!this.frameless) {
-          this.getNavis(this.app.id, this.user.email);
-          this.getNaviData(this.app.id, this.user.email);
+        this.runService.$user.set(res.user);
+        if (!this.frameless()) {
+          this.getNavis(this.app().id, this.user().email);
+          this.getNaviData(this.app().id, this.user().email);
         }
       });
   }
 
-  // saveUserDetail(user){
-  //   this.runService.saveUserDetails(this.user.id,user)
-  //   .subscribe(user=>{
-  //     this.user=user;
-  //   })
-  // }
-
-
-  pushSub: any;
-  actualSub: any;
-  pushSubError: any;
   checkPush(app) {
     if (app.canPush) {
       this.swPush.subscription
@@ -226,7 +268,7 @@ export class StartComponent implements OnInit {
     })
       .then(sub => {
         this.actualSub = sub;
-        this.pushService.subscribePush(this.user.id, sub)
+        this.pushService.subscribePush(this.user().id, sub)
           .subscribe(res => this.pushSub = res);
       })
       .catch(err => { this.pushSubError = { err: err }; console.log(err) });
@@ -234,23 +276,22 @@ export class StartComponent implements OnInit {
   }
 
   onceDone() {
-    this.runService.onceDone(this.app.id, this.user.email, true)
-    .subscribe({
-      next:res=>{
-        this.user = res;
-        this.userService.setUser(res);
-      },
-      error:err=>{
-        this.user.once = true;
-        this.userService.setUser(this.user);
-      }
-    })
+    this.runService.onceDone(this.app().id, this.user().email, true)
+      .subscribe({
+        next: res => {
+          this.user.set(res);
+          this.userService.setUser(res);
+          this.runService.$user.set(res);
+        },
+        error: err => {
+          this.user().once = true;
+          this.userService.setUser(this.user);
+        }
+      })
   }
 
   logout() {
-    // this.userService.clearStorage('user');
     this.userService.logout();
-    // .subscribe(user=>this.user=user);
   }
 
 
@@ -263,214 +304,196 @@ export class StartComponent implements OnInit {
   }
 
   hideSb() {
-    setTimeout(() => { this.sidebarActive = false }, 300)
+    setTimeout(() => { this.sidebarActive.set(false) }, 300)
   }
-
-  screen: any;
-  mismode: boolean;
-  startPage:string='start';
   getAppByPath(path) {
-    this.appLoading = true;
-    this.runService.getRunAppByPath(path, { email: this.user.email })
+    this.appLoading.set(true);
+    this.runService.getRunAppByPath(path, { email: this.user().email })
       .subscribe({
         next: (res) => {
-          this.appLoading = false;
-          if (res) {
-            this.validPath = true;
-            this.app = res;
-            this.runService.$app.set(this.app);
-            // this.runService.appId = this.app.id;
-            // this.runService.app = this.app;
-            if (!this.frameless) {
-              this.getNavis(res.id, this.user.email);
-              this.getNaviData(res.id, this.user.email);
-            }
-            if (this.app.layout == 'topnav') {
-              this.navToggle = {};
-            }
-            this.titleService.setTitle(this.app.title);
-            if (this.app.once) {
-              this.runService.getRunScreen(this.app.once)
-                .subscribe(screen => this.screen = screen);
-            }
-
-            if (!this.app.live){
-              if (!path.includes("--dev")){ // app is dev && path not --dev
-                this.mismode = true;
-                // Show mismode: App is under maintenance
-              }
-            }else{
-              if (path.includes("--dev")){  // app is live && path --dev
-                this.mismode = true;
-                // show mismode: App is live at url
-              }
-            }
-            this.appUrl = location.protocol + '//' + this.app.appPath + "." + domainBase;
-
-            this.startPage = res.startPage??'start'; // make sure startPage always set if defined
-
-            let url = this.router.url.split('?')[0].replace('/', '');
-            
-            if (!url){
-              if (res.startPage) {
-                // console.log('ada startpage', url);
-                // this.startPage = res.startPage;
-                this.router.navigate([res.startPage], { relativeTo: this.route, queryParams: this.route.snapshot.queryParams });
-              }else{
-                // console.log('x ada startpage', url);
-                this.router.navigate(['start'],{ relativeTo: this.route});
-              }
-            }
-
-          } else {
-            this.validPath = false;
+          this.app.set(res);
+          // console.log("getAppByPath", this.app());
+          this.runService.$app.set(res);
+          if (!this.frameless()) {
+            this.getNavis(res.id, this.user().email);
+            this.getNaviData(res.id, this.user().email);
           }
-          this.checkPush(this.app);
-          this.initScreen(this.app.f);
+          if (res.layout == 'topnav') {
+            this.navToggle.set({});
+          }
+          this.titleService.setTitle(res.title);
+          if (res.once) {
+            this.runService.getRunScreen(res.once)
+              .subscribe(screen => this.screen.set(screen));
+          }
+
+          this.appUrl = location.protocol + '//' + res.appPath + "." + domainBase;
+
+          let url = this.router.url.split('?')[0].replace('/', ''); // utk check nya da /path x kt url. Mn xda, navigate ke startPage or /start
+
+          if (!url) {
+            if (res.startPage) {
+              this.router.navigate([res.startPage], 
+                { relativeTo: this.route, 
+                  queryParams: this.route.snapshot.queryParams,
+                  replaceUrl: true // Optional: replaces history entry
+                });
+            } else {
+              // console.log('x ada startpage', url);
+              this.router.navigate(['start'], { 
+                relativeTo: this.route,
+                replaceUrl: true });
+            }
+          }
+
+          this.appLoading.set(false);
+          this.checkPush(res);
+          this.initScreen(res.f);
         },
         error: (err) => {
-          this.validPath = false;
-          this.appLoading = false;
+          // this.validPath.set(false);
+          this.appLoading.set(false);
         }
       });
   }
 
-  isDev: boolean;
   getApp(id) {
-    this.appLoading = true;
-    this.runService.getRunApp(id, { email: this.user.email })
+    this.appLoading.set(true);
+    this.runService.getRunApp(id, { email: this.user().email })
       .subscribe({
         next: (res) => {
-          this.app = res;
-          this.runService.$app.set(this.app); 
+          this.app.set(res);
+          this.runService.$app.set(res);
 
-          this.appLoading = false;
-          // this.isDev = this.app.email.indexOf(this.userService.getActualUser().email) > -1;
+          this.appLoading.set(false);
+          // this.isDev.set(res.email.indexOf(this.userService.getActualUser().email) > -1);
 
-          this.runService.getAppUserByEmail(id, { email: this.user.email })
+          this.runService.getAppUserByEmail(id, { email: this.user().email })
             .subscribe(appUserList => {
-              this.appUserList = appUserList;
+              this.appUserList.set(appUserList);
             });
 
-          if (this.app.layout == 'topnav') {
-            this.navToggle = {};
+          if (res.layout == 'topnav') {
+            this.navToggle.set({});
           }
-          if (this.app.once) {
-            this.runService.getRunScreen(this.app.once)
-              .subscribe(screen => this.screen = screen);
+          if (res.once) {
+            this.runService.getRunScreen(res.once)
+              .subscribe(screen => this.screen.set(screen));
           }
-          this.checkPush(this.app);
-          this.initScreen(this.app.f);
+          this.checkPush(res);
+          this.initScreen(res.f);
+
+          // this.startPage.set(res.startPage??'start');
+
+          // utk check nya da /path x kt url. Mn xda, navigate ke startPage or /start
+          // utk run dari designer nya xjln, sbb sentiasa da /run/<app-id>
+          let url = this.router.url.split('?')[0]
+            .replace(this.preurl, '')
+            .replace('/', '');
+
+          if (!url) {
+            if (res.startPage) {
+              this.router.navigate([res.startPage], { 
+                relativeTo: this.route, 
+                queryParams: this.route.snapshot.queryParams,
+                replaceUrl: true
+              });
+            } else {
+              // console.log('--no startpage', url);
+              this.router.navigate(['start'], { 
+                relativeTo: this.route,
+                replaceUrl: true });
+            }
+          }
+
+
         },
-        error: (err) => this.appLoading = false
+        error: (err) => this.appLoading.set(false)
       })
   }
 
   getNavis(id, email) {
     this.runService.getNavis(id, email)
       .subscribe(res => {
-        this.navis = res;
-        this.runService.$navis.set(res);   
+        this.navis.set(res);
+        this.runService.$navis.set(res);
         this.runPre();
+        var naviObj = {}
+        res.forEach(n => {
+          n.items.forEach(i => {
+            if (!naviObj[i.type]) naviObj[i.type] = {};
+            naviObj[i.type][i.screenId] = this.preItem()[i.id];
+          })
+        })
+        this.runService.$naviPerm.set(naviObj);
       })
   }
 
   getNaviData(id, email) {
     this.runService.getNaviData(id, email)
       .subscribe(res => {
-        this.naviData = res;
+        this.naviData.set(res);
         this.runService.$naviData.set(res);
         this.runPre();
       })
   }
 
-  darkMode: boolean = false;
   toggleDark() {
-    this.darkMode = !this.darkMode;
+    this.darkMode.set(!this.darkMode);
     // localStorage.setItem("darkMode",this.darkMode+"");
   }
-
-  // designUrl: any;
-  // getDesignUrl() {
-  //   var split = location.hash.split('/');
-  //   var appId = split[2].replace(/\D/g,'');
-  //   if (split[3]) {
-  //     if (['form', 'dataset', 'dashboard', 'screen'].indexOf(split[3]) > -1) {
-  //       this.designUrl = {
-  //         url: `/design/${appId}/ui/${split[3]}`,
-  //         query: { id: split[4] }
-  //       }
-  //     } else if(['profile'].indexOf(split[3]) > -1){
-  //       this.designUrl = {
-  //         url: `/design/${appId}/`,
-  //         query: undefined
-  //       }
-  //     }else if(['start'].indexOf(split[3]) > -1){
-  //       this.designUrl = {
-  //         url: `/design/${appId}/ui/navi`,
-  //         query: undefined
-  //       }
-  //     } else {
-  //       this.designUrl = {
-  //         url: `/design/${appId}/${split[3]}`,
-  //         query: { id: split[4] }
-  //       }
-  //     }
-  //   } else {
-  //     this.designUrl = {
-  //       url: `/design/${appId}/`,
-  //       query: undefined
-  //     }
-  //   }
-  // }
-
-  baseUrl: string = '';
-  $this$: any = {}
 
   preCheck(f) {
     let res = undefined;
     try {
-      if (f.pre){
+      if (f.pre) {
         let pre = f.pre.trim();
         res = this._pre(pre);//new Function('$', '$prev$', '$user$', 'return ' + f.pre)(this.entry.data, this.entry && this.entry.prev, this.user);
       }
-    } catch (e) { this.logService.log(`{form-${f?.code}-precheck}-${e}`) }
+    } catch (e) { this.logService.log(`{start-${f?.code}-precheck}-${e}`) }
     return !f.pre || res;
   }
 
-  preGroup:any={}
-  preItem:any={}
-  firstActiveSet:boolean=false;
-  runPre(){
-    this.navis?.forEach((group,index)=>{
-      this.preGroup[group.id]=this.preCheck(group);
-      if(!this.firstActiveSet && this.preGroup[group.id]){
-        this.firstActiveSet = true;
-        this.navToggle[index] = true;
+  runPre(): void {
+    const updatedPreGroup = { ...this.preGroup() };
+    const updatedPreItem = { ...this.preItem() };
+    const updatedNavToggle = {};
+
+    let firstActiveSet = false;
+
+    this.navis()?.forEach((group, index) => {
+      updatedPreGroup[group.id] = this.preCheck(group);
+
+      if (!firstActiveSet && updatedPreGroup[group.id]) {
+        firstActiveSet = true;
+        updatedNavToggle[index] = true;
       }
-      group.items?.forEach(item=>{
-        this.preItem[item.id]=this.preCheck(item);
-      })
-    })
+
+      group.items?.forEach((item) => {
+        updatedPreItem[item.id] = this.preCheck(item);
+      });
+    });
+
+    this.preGroup.set(updatedPreGroup);
+    this.preItem.set(updatedPreItem);
+    this.navToggle.set(updatedNavToggle);
+
   }
 
+  _pre = (v) => new Function('$app$', '$navi$', '$navis$', '$badge$', '$user$', '$conf$', '$this$', '$param$', 'ServerDate', '$base$', '$baseUrl$', '$baseApi$', '$token$', `return ${v}`)
+    (this.app(), this.naviData(), this.navis(), this.badge, this.user(), this.runService?.appConfig, this._this, this.$param$, ServerDate, this.base, this.baseUrl(), this.baseApi, this.accessToken);
 
-  _pre = (v) => new Function('$app$','$navi$','$navis$', '$badge$', '$user$','$conf$', '$this$', '$param$','$baseUrl$','$token$', `return ${v}`)
-  (this.app,this.naviData,this.navis, this.badge, this.user, this.runService?.appConfig, this.$this$, this.$param$, this.baseUrl, this.accessToken);
-
-  
   // _eval = (v) => new Function('$app$', '$navi$', '$navis$', '$badge$', '$user$', '$conf$', '$this$','$loadjs$', '$param$','$http$', '$post$', '$endpoint$', 'ServerDate', '$base$', '$baseUrl$','$baseApi$', '$token$', `return ${v}`)
-  //   (this.app, this.naviData, this.navis, this.badge, this.user, this.runService?.appConfig, this.$this$, this.loadScript, this.$param$, this.httpGet, this.httpPost, this.endpointGet, ServerDate, this.base, this.baseUrl, this.baseApi, this.accessToken);
+  //   (this.app, this.naviData, this.navis, this.badge, this.user, this.runService?.appConfig, this._this, this.loadScript, this.$param$, this.httpGet, this.httpPost, this.endpointGet, ServerDate, this.base, this.baseUrl, this.baseApi, this.accessToken);
 
-  _eval = (v) => new Function('$app$','$_', '$', '$prev$', '$user$', '$conf$', '$http$', '$post$', '$endpoint$', '$this$', '$loadjs$','$digest$', '$param$', '$log$', '$update$', '$updateLookup$', '$toast$', '$base$', '$baseUrl$', '$baseApi$', 'dayjs', 'ServerDate', 'echarts', '$live$', '$token$', '$merge$', '$web$', '$go','$pop','$q$','$showNav$',
-  `return ${v}`)(this.app, {}, {}, {}, this.user, this.runService?.appConfig, this.httpGet, this.httpPost, this.endpointGet, this.$this$, this.loadScript, this.$digest$, this.$param$, this.log, this.updateField, this.updateLookup, this.$toast$, this.base, this.baseUrl, this.baseApi, dayjs, ServerDate, null, this.runService?.$live$(this.liveSubscription, this.$digest$), this.accessToken, deepMerge, this.http, null, null, this.$q, this.openNav);
-
+  _eval = (v) => new Function('$app$', '$_', '$', '$prev$', '$user$', '$conf$', '$http$', '$post$', '$endpoint$', '$this$', '$loadjs$', '$digest$', '$param$', '$log$', '$update$', '$updateLookup$', '$toast$', '$base$', '$baseUrl$', '$baseApi$', 'dayjs', 'ServerDate', 'echarts', '$live$', '$token$', '$merge$', '$web$', '$go', '$pop', '$q$', '$showNav$',
+    `return ${v}`)(this.app(), {}, {}, {}, this.user(), this.runService?.appConfig, this.httpGet, this.httpPost, this.endpointGet, this._this, this.loadScript, this.$digest$, this.$param$, this.log, this.updateField, this.updateLookup, this.$toast$, this.base, this.baseUrl(), this.baseApi, dayjs, ServerDate, null, this.runService?.$live$(this.liveSubscription(), this.$digest$), this.accessToken, deepMerge, this.http, null, null, this.$q, this.openNav);
 
 
   compileTpl(html, data) {
     var f = "";
     try {
-      f = compileTpl(html, data);
+      f = compileTpl(html, data, 'start');
     } catch (e) {
       this.logService.log(`{start-compiletpl}-${e}`)
     }
@@ -479,18 +502,23 @@ export class StartComponent implements OnInit {
 
   initScreen(js) {
     let res = undefined;
-    let jsTxt = this.compileTpl(js, {$param$:this.$param$,$this$:this.$this$,$user$:this.user, $conf$:this.runService.appConfig,$base$:base, $baseUrl$:this.baseUrl, $baseApi$:baseApi})
+    let jsTxt = this.compileTpl(js, { $param$: this.$param$, $this$: this._this, $user$: this.user(), $conf$: this.appConfig, $base$: base, $baseUrl$: this.baseUrl(), $baseApi$: baseApi })
     try {
       res = this._eval(jsTxt);// new Function('$', '$prev$', '$user$', '$http$', 'return ' + f)(this.entry.data, this.entry && this.entry.prev, this.user, this.httpGet);
-    } catch (e) { this.logService.log(`{tiles-${this.app.title}-initNavi}-${e}`) }
+    } catch (e) { this.logService.log(`{start-${this.app().title}-initNavi}-${e}`) }
     this.runPre();
     return res;
   }
 
-  httpGet = (url, callback, error) => lastValueFrom(this.runService.httpGet(url, callback, error).pipe(tap(()=>this.$digest$())));
-  httpPost = (url, body, callback, error) => lastValueFrom(this.runService.httpPost(url, body, callback, error).pipe(tap(()=>this.$digest$())));
-  endpointGet = (code, params, callback, error) => lastValueFrom(this.runService.endpointGet(code, this.app?.id, params, callback, error).pipe(tap(()=>this.$digest$())));
-  
+  // httpGet = this.runService.httpGet;
+  // httpPost = this.runService.httpPost;
+  // endpointGet = (code, params, callback, error) => this.runService.endpointGet(code, this.app?.id, params, callback, error)
+
+  httpGet = (url, callback, error) => lastValueFrom(this.runService.httpGet(url, callback, error).pipe(tap(() => this.$digest$())));
+  httpPost = (url, body, callback, error) => lastValueFrom(this.runService.httpPost(url, body, callback, error).pipe(tap(() => this.$digest$())));
+  endpointGet = (code, params, callback, error) => lastValueFrom(this.runService.endpointGet(code, this.app()?.id, params, callback, error).pipe(tap(() => this.$digest$())));
+
+
   loadScript = loadScript;
 
   $digest$ = () => {
@@ -503,40 +531,45 @@ export class StartComponent implements OnInit {
 
   log = (log) => this.logService.log(JSON.stringify(log));
 
-  elMap:any = {}
-  $q = (el)=>{
-    if (!this.elMap[el]){
+  elMap: any = {}
+  $q = (el) => {
+    if (!this.elMap[el]) {
       this.elMap[el] = document.querySelector(el);
     }
     return this.elMap[el];
   }
 
-  openNav = (opened: boolean)=>{
+  openNav = (opened: boolean) => {
     this.pageTitleService.open(opened);
   }
 
-  
+
   updateField = (entryId, value, callback, error) => {
-    return lastValueFrom(this.entryService.updateField(entryId, value, this.runService.$app().id)
+    return lastValueFrom(this.entryService.updateField(entryId, value, this.appId)
       .pipe(
-        tap({ next: callback, error: error }), first()
+        tap({ next: callback, error: error }),
+        tap(() => {
+          this.runService.$startTimestamp.set(Date.now())
+        }), first()
       ));
   }
 
   updateLookup = (entryId, value, callback, error) => {
-    return lastValueFrom(this.entryService.updateLookup(entryId, value, this.runService.$app().id)
+    return lastValueFrom(this.entryService.updateLookup(entryId, value, this.appId)
       .pipe(
-        tap({ next: callback, error: error }), first()
+        tap({ next: callback, error: error }),
+        tap(() => {
+          this.runService.$startTimestamp.set(Date.now())
+        }), first()
       ));
   }
 
-  // getUrl(){
-  //   return location.protocol + '//' + this.app.appPath + "." + domainBase;
-  // }
 
-  // showEdit() {
-  //   var email = this.userService.getActualUser().email
-  //   return this.app?.email.indexOf(email) > -1;
-  // }
+  dismissAllModal() {
+    this.modalService.dismissAll('');
+  }
 
+  ngOnDestroy() {
+    Object.keys(this.liveSubscription()).forEach(key => this.liveSubscription()[key].unsubscribe());//.forEach(sub => sub.unsubscribe());
+  }
 }

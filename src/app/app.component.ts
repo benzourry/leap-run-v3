@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with LEAP.  If not, see <http://www.gnu.org/licenses/>.
 
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 // import { PushService } from './_shared/service/push.service';
 // import { RunService } from './service/run.service';
@@ -38,17 +38,22 @@ import { RunService } from './run/_service/run.service';
     imports: [RouterOutlet, ToastsContainer, FaIconComponent]
 })
 export class AppComponent implements OnInit {
+
+  private runService = inject(RunService)
+  private swUpdate = inject(SwUpdate)
+  private utilityService = inject(UtilityService)
+  private ngbConfig = inject(NgbConfig)
+
   title = 'app';
-  path: string;
-  pathExist: any;
-  serverDown: boolean;
-  appLoading: boolean;
-  updateAvailable: boolean = false;
+  path = signal<string>('');
+  pathExist = signal<boolean>(true);
+  serverDown = signal<boolean>(false);
+  appLoading = signal<boolean>(false);
+  updateAvailable = signal<boolean>(false);
 
-  constructor(private runService: RunService, private swUpdate: SwUpdate, private utilityService: UtilityService,
-    ngbConfig: NgbConfig) {
+  constructor() {
 
-    const updatesAvailable = swUpdate.versionUpdates.pipe(
+    const updatesAvailable = this.swUpdate.versionUpdates.pipe(
       filter((evt): evt is VersionReadyEvent => evt.type === 'VERSION_READY'),
       map(evt => ({
         type: 'UPDATE_AVAILABLE',
@@ -56,9 +61,9 @@ export class AppComponent implements OnInit {
         available: evt.latestVersion,
       })));
     updatesAvailable.subscribe(evt => {
-      this.updateAvailable = true;
+      this.updateAvailable.set(true);
     })
-    this.utilityService.testOnline$().subscribe(online => this.offline = !online);
+    this.utilityService.testOnline$().subscribe(online => this.offline.set(!online));
 
   }
 
@@ -70,30 +75,31 @@ export class AppComponent implements OnInit {
     }
   }
 
-  offline = false;
+  offline = signal<boolean>(false);
+
   ngOnInit() {
     // this.userService.getUser()
     //   .subscribe((user) => {
     // this.user = user;
-    this.path = this.getPath();
-    this.checkPath(this.path);
-    document.querySelector('#manifest-placeholder').setAttribute('href', `${baseApi}/app/${this.path}/manifest.json`);
-    document.querySelector('#favicon-placeholder').setAttribute('href', `${baseApi}/app/${this.path}/logo/16`);
+    this.path.set(this.getPath());
+    this.checkPath(this.path());
+    document.querySelector('#manifest-placeholder').setAttribute('href', `${baseApi}/app/${this.path()}/manifest.json`);
+    document.querySelector('#favicon-placeholder').setAttribute('href', `${baseApi}/app/${this.path()}/logo/16`);
 
   }
 
   checkPath(p: string) {
-    this.appLoading = true;
+    this.appLoading.set(true);
     this.runService.checkPath(p)
       .subscribe({
         next: res => {
-          this.serverDown = false;
-          this.pathExist = res;
-          this.appLoading = false;
+          this.serverDown.set(false);
+          this.pathExist.set(res);
+          this.appLoading.set(false);
 
         }, error: err => {
-          this.serverDown = true;
-          this.appLoading = false;
+          this.serverDown.set(true);
+          this.appLoading.set(false);
 
         }
       })
