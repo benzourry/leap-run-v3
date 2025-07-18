@@ -526,7 +526,7 @@
     <div [class.disabled]="field().readOnly">
       <div class="btn-group-toggle mb-n1" role="group">
         <!-- UTK SIMPLE VALUE, BOLEH GUNA [(NGMODEL)] SBB DPT SET CHECKED VALUE ON INIT (NO NEED COMPARISON OBJ PROPS) -->
-        @for (i of scales; track $index) {
+        @for (i of scales(); track $index) {
           <input type="radio" name="f-{{field().id}}-{{id()}}" #formField="ngModel" [(ngModel)]="value"
             (ngModelChange)="valueChanged(i)" [required]="field()?.v?.required" [value]="i" class="btn-check"
             id="f-{{field().id}}-{{id()}}-{{$index}}" autocomplete="off">

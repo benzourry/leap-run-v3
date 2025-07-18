@@ -45,6 +45,7 @@ import { EntryService } from '../_service/entry.service';
 import { LookupService } from '../_service/lookup.service';
 import { RunService } from '../_service/run.service';
 import { GroupByPipe } from '../../_shared/pipe/group-by.pipe';
+import { IconSplitPipe } from '../../_shared/pipe/icon-split.pipe';
 
 @Component({
   selector: 'app-list',
@@ -57,7 +58,7 @@ import { GroupByPipe } from '../../_shared/pipe/group-by.pipe';
     NgbDropdownMenu, NgbDropdownItem, NgbDropdownButtonItem, NgClass, FieldViewComponent, StepWizardComponent,
     NgbPagination, NgbPaginationFirst, NgbPaginationPrevious, NgbPaginationNext, NgbPaginationLast, UserEntryFilterComponent, AngularEditorModule,
     forwardRef(() => FormComponent), forwardRef(() => ViewComponent), forwardRef(() => ScreenComponent),
-    SafePipe, KeyValuePipe]
+    SafePipe, KeyValuePipe, IconSplitPipe]
 })
 export class ListComponent implements OnInit, OnDestroy {
 
@@ -171,6 +172,8 @@ export class ListComponent implements OnInit, OnDestroy {
   _this = createProxy({},()=>this.cdr.markForCheck());
 
   appConfig:any = this.runService.appConfig;
+
+  private destroyed = false;
 
   constructor() {
     this.utilityService.testOnline$().subscribe((online) => this.offline.set(!online));
@@ -324,6 +327,8 @@ export class ListComponent implements OnInit, OnDestroy {
         this.entryService.getListByDataset(this.dataset().id, params)
           .subscribe({
             next: res => {
+              if (this.destroyed) return;
+
               this.entryList.set(res.content);
               this.entryTotal.set(res.page?.totalElements);
               this.itemLoading.set(false);
@@ -340,6 +345,7 @@ export class ListComponent implements OnInit, OnDestroy {
               })
 
             }, error: err => {
+              if (this.destroyed) return;
               this.itemLoading.set(false)
             }
           });
@@ -733,7 +739,7 @@ export class ListComponent implements OnInit, OnDestroy {
   }
 
 
-  getIcon = (str) => str ? str.split(":") : ['far', 'file'];
+  // getIcon = (str) => str ? str.split(":") : ['far', 'file'];
 
   _eval = (data, entry, v) => this._evalRun(entry, v, false);// new Function('$_', '$', '$prev$', `return ${v}`)(entry, data, entry && entry.prev);
 
@@ -810,6 +816,7 @@ export class ListComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.destroyed = true;
     Object.keys(this.liveSubscription).forEach(key => this.liveSubscription[key].unsubscribe());//.forEach(sub => sub.unsubscribe());
   }
 

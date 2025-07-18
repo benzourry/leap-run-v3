@@ -32,6 +32,7 @@ import { LogService } from '../../_shared/service/log.service';
     changeDetection: ChangeDetectionStrategy.OnPush,
     template:`
     <app-list 
+      (changed)="dsChanged($event)" 
       [datasetId]="_datasetId()"
       (datasetLoaded)="datasetLoaded($event)"
       [param]="_param()">
@@ -89,6 +90,10 @@ export class ListWebComponent implements OnInit {
 
   datasetLoaded(dataset){
     this.dataset.set(dataset);
+  }
+
+  dsChanged(event){
+    // console.log("dsChanged",event);
   }
 
 }

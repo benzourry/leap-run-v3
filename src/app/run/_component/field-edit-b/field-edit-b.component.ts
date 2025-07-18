@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with LEAP.  If not, see <http://www.gnu.org/licenses/>.
 
-import { Component, OnInit, forwardRef, ViewChild, Optional, Inject, ChangeDetectorRef, output, input, computed, AfterViewInit, effect, viewChild, ChangeDetectionStrategy, untracked } from '@angular/core';
+import { Component, OnInit, forwardRef, ViewChild, Optional, Inject, ChangeDetectorRef, output, input, computed, AfterViewInit, effect, viewChild, ChangeDetectionStrategy, untracked, Signal } from '@angular/core';
 import { baseApi } from '../../../_shared/constant.service';
 import { NG_VALUE_ACCESSOR, NG_ASYNC_VALIDATORS, NG_VALIDATORS, NgModel, FormsModule } from '@angular/forms';
 import { NgbDateAdapter, NgbTimeAdapter, NgbTooltip, NgbDatepicker, NgbInputDatepicker, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
@@ -79,7 +79,7 @@ export const CUSTOMINPUT_VALUE_ACCESSOR: any = {
     SafePipe, SecurePipe, NgLeafletComponent, SpeechToTextComponent]
 })
 
-export class FieldEditComponent extends ElementBase<any> implements OnInit {
+export class FieldEditComponent extends ElementBase<any> {
 
 
   field = input<any>();
@@ -121,8 +121,6 @@ export class FieldEditComponent extends ElementBase<any> implements OnInit {
 
   public identifier = `form-text-${identifier++}`;
   hasFocus: boolean = false;
-
-  scales: number[] = [1, 2, 3, 4, 5];
 
   editorConfig: AngularEditorConfig = {
     editable: true,
@@ -182,7 +180,7 @@ export class FieldEditComponent extends ElementBase<any> implements OnInit {
     sanitize: false,
     toolbarPosition: 'bottom',
     toolbarHiddenButtons: [
-      [
+      // [
         // 'undo',
         // 'redo',
         // 'bold',
@@ -201,7 +199,7 @@ export class FieldEditComponent extends ElementBase<any> implements OnInit {
         // 'insertOrderedList',
         // 'heading',
         // 'fontName'
-      ],
+      // ],
       [
         // 'fontSize',
         // 'textColor',
@@ -228,22 +226,6 @@ export class FieldEditComponent extends ElementBase<any> implements OnInit {
   ) {
     super(validators, asyncValidators);
 
-    // !!!! Why this is not used instead of ngAfterViewInit??!!! Need to monitor... 
-    // effect(() => {
-    //   if (this.field().x?.use_default && !deepEqual(this.defaultValue(), this._defaultValue)) {
-    //     console.log("#effect defaultValue")
-    //     this._defaultValue = this.defaultValue();
-    //     this.value = this.defaultValueComputed();
-    //   }
-    // })
-
-    // effect(()=>{
-    //   this.model()?.control?.valueChanges.subscribe(v=>{
-    //     console.log("## value",v,"## field-code",this.field().code);
-    //   })
-    // })
-
-
     effect(() => {
       // track only the signals that must trigger the effect
       const useDef = this.field().x?.use_default;
@@ -258,7 +240,7 @@ export class FieldEditComponent extends ElementBase<any> implements OnInit {
           queueMicrotask(() => {
             this.value = defaultValComputed;
             this.writeValue(defaultValComputed); // must be inside this, otherwise it will not work
-            // this.valueChanged(defaultValComputed); // not needed
+            this.valueChanged(defaultValComputed); // not needed
           });
         });
       }
@@ -293,16 +275,22 @@ export class FieldEditComponent extends ElementBase<any> implements OnInit {
     effect(() => {
       if (this.field()?.type == 'checkboxOption') {
         // … do the mutation without tracking it:    
-        if (this.lookupList()!=null && this.lookupList().length>0 && this.value!=null) {
+        if (this.lookupList()!=null && this.lookupList().length>0 && this.value!=null && this.value.length>0) {
           if (this.value instanceof Array) {
             untracked(() => {
               queueMicrotask(() => {
-                  const newVal = this.value?.map(v=>this.lookupList().find(option => option?.code === this.value?.code) || this.value)
+                  const newVal = this.value?.map(v=>this.lookupList().find(option => option?.code === v?.code) || v)
                   this.value = newVal;
               });
             });
           }
         }
+      }
+    })
+
+    effect(() => {
+      if (this.field().x?.inlineImg) {
+        this.editorConfig.toolbarHiddenButtons[1].splice(this.editorConfig.toolbarHiddenButtons[1].indexOf('insertImage'), 1);
       }
     })
 
@@ -312,14 +300,14 @@ export class FieldEditComponent extends ElementBase<any> implements OnInit {
 
   defaultValueComputed = computed(() => (this.value ?? this.defaultValue()))
 
-  ngOnInit(): void {
-    // this.list = this.getAsList(this.field().options);
-    this.scales = this.createRange(this.field());
-    if (this.field().x?.inlineImg) {
-      this.editorConfig.toolbarHiddenButtons[1].splice(this.editorConfig.toolbarHiddenButtons[1].indexOf('insertImage'), 1);
-    }
+  scales: Signal<number[]> = computed(() => this.createRange(this.field()));
 
-  }
+  // ngOnInit(): void {
+  //   // this.list = this.getAsList(this.field().options);    
+  //   if (this.field().x?.inlineImg) {
+  //     this.editorConfig.toolbarHiddenButtons[1].splice(this.editorConfig.toolbarHiddenButtons[1].indexOf('insertImage'), 1);
+  //   }
+  // }
 
   selectGroupBy = (item) => this.field() ? this.compileTpl(this.field()?.x?.groupBy, { '$': item }) : undefined;
 
