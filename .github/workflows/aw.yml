@@ -1,4 +1,4 @@
-name: Deploy to AW Server
+name: Deploy to AW RUNNER Server
 
 on:
   push:
