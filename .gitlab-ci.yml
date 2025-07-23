@@ -23,7 +23,6 @@ include:
   - local: '.gitlab/ci/ia-ci.yml'
   - local: '.gitlab/ci/aa-ci.yml'
 
-# === GitHub Sync Job ===
 stages:
   - sync
   - build
