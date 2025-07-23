@@ -34,15 +34,29 @@ sync_from_github:
   tags:
     - reka-run
   image: alpine:latest
-  before_script:
-    - apk add --no-cache git bash
   script:
-    - git config --global user.email "benzourry@gmail.com"
-    - git config --global user.name "Razif Baital"
-    - git remote add github https://oauth2:${GITHUB_TOKEN}@github.com/benzourry/leap-run-v3.git
-    - git fetch github
-    - git reset --hard github/main
-    - git push -f origin main
+    - apk add --no-cache git bash
+
+    # Git config
+    - git config --global user.email "ci-sync@leap.com"
+    - git config --global user.name "LEAP CI Sync Bot"
+
+    # Clone GitHub source repo
+    - git clone https://oauth2:${GITHUB_TOKEN}@github.com/benzourry/leap-run-v3.git github-source
+
+    # Replace only selected files/folders
+    - rm -rf src && mkdir src
+    - cp -r github-source/src/* src/
+    - cp github-source/angular*.json . || true
+    - cp github-source/ngsw-config*.json . || true
+    - cp github-source/package.json .
+
+    # Commit and push changes
+    - git add src angular*.json ngsw-config*.json package.json
+    - git commit -m "Sync from GitHub [CI]" || echo "No changes"
+    - git push https://blmrazif:${GITLAB_PAT}@codebucket.unimas.my/blmrazif/leap-run.git HEAD:main
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
-    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'         # manual run
+      when: manual
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'    # scheduled run
+      when: always
