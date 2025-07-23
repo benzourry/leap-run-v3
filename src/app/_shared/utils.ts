@@ -47,7 +47,6 @@ export function compileTpl(templateText: string, data: any, scopeId: string): st
   let code = tplCache[tplHash];
 
   // Put variables in global if there is onclick handler
-  // ** New experimental
   const hasEvent = /on\w+="/.test(templateText);
   // const hasClick = templateText.includes('onclick="');
   if (hasEvent) {
