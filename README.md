@@ -1,6 +1,6 @@
-# LEAP-RUN V3.2
+# LEAP-RUN v3.2
 
-LEAP-RUN V3.2 is an Angular-based frontend framework designed for the **LEAP App Builder**, a powerful no-code tool that enables users to create applications with minimal effort. This project provides application runtime used to parse and run the application created using LEAP-DESIGN.
+LEAP-RUN v3.2 is an Angular-based frontend framework designed for the **LEAP App Builder**, a powerful no-code tool that enables users to create applications with minimal effort. This project provides application runtime used to parse and run the application created using LEAP-DESIGN.
 
 ## Features
 - **Modern UI**: Built with Angular for a responsive and dynamic user experience.
