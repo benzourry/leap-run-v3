@@ -1,27 +1,87 @@
-# LeapDesignV34
+# LEAP-RUN V3.2
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 18.0.6.
+LEAP-RUN V3.2 is an Angular-based frontend framework designed for the **LEAP App Builder**, a powerful no-code tool that enables users to create applications with minimal effort. This project provides application runtime used to parse and run the application created using LEAP-DESIGN.
 
-## Development server
+## Features
+- **Modern UI**: Built with Angular for a responsive and dynamic user experience.
+- **Drag-and-Drop Functionality**: Seamlessly integrate components without writing code.
+- **Component Library**: Pre-built UI components for rapid development.
+- **Customization**: Supports themes and styling adjustments.
+- **Performance Optimized**: Efficient rendering and state management.
+- **REST API Integration**: Connect to backend services effortlessly.
+- **Multi-Platform Support**: Works across different browsers and devices.
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+# About LEAP App Builder
 
-## Code scaffolding
+**LEAP App Builder** is a web-based application development platform designed to streamline the creation of modern web apps. It is powered by three core components:
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+- **LEAP-IO** – The backend engine that powers data processing and API services  
+- **LEAP-DESIGN** – A no-code editor for designing app logic and UI  
+- **LEAP-RUN** – The runtime engine that executes and renders the app in real time
 
-## Build
+LEAP App Builder adopts a **building block** and **metadata-driven** approach, allowing apps to be constructed from reusable components. By leveraging a technology-agnostic metadata format, applications built with LEAP remain compatible and up-to-date with the evolving LEAP runtime — without requiring manual intervention from developers.
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+## Available Instances
 
-## Running unit tests
+As of now, there are **six active instances** of the LEAP App Builder platform:
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+1. **LEAPMY** – Public and community instance  
+2. **IA** – Privately managed by UNIMAS  
+3. **AA** – Privately managed by UNIMAS  
+4. **IREKA** – Commercial installation by UNIMAS  
+5. **AppWizard** – Privately managed by Sarawak Skills  
+6. **KBORNEO** – Privately managed by ICATS University College
 
-## Running end-to-end tests
+## Prerequisites
+Before running the project, ensure you have the following installed:
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+- [Node.js](https://nodejs.org/) (Latest LTS recommended)
+- [Angular CLI](https://angular.io/cli)
+- Package Manager: `npm` or `yarn`
 
-## Further help
+## Installation
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+1. Clone the repository:
+   ```sh
+   git clone https://github.com/your-repo/LEAP-RUN.git
+   cd LEAP-RUN
+   ```
+2. Install dependencies:
+   ```sh
+   npm install
+   ```
+
+## Running the Project
+
+To start the development server, run:
+```sh
+ng serve
+```
+
+Then, open [http://localhost:4200](http://localhost:4200) in your browser.
+
+## Building for Production
+
+To generate an optimized production build, use:
+```sh
+ng build --prod
+```
+
+## Contribution
+We welcome contributions! To get started:
+1. Fork the repository.
+2. Create a feature branch: `git checkout -b feature-name`
+3. Commit your changes: `git commit -m 'Add feature'`
+4. Push to the branch: `git push origin feature-name`
+5. Open a pull request.
+
+## License
+This project is licensed under the [MIT License](LICENSE).
+
+## Contact
+For inquiries or support, reach out via [benzourry@gmail.com](mailto:benzourry@gmail.com) or open an issue in the repository.
+
+---
+
+Happy building with **LEAP App Builder**! 🚀
+
