@@ -59,7 +59,7 @@
             "fileReplacements": [
               {
                 "replace": "./src/app/_shared/constant.service.ts",
-                "with": "./src/app/_shared/constant-aa.service.ts"
+                "with": "./src/app/_shared/constant-ireka.service.ts"
               }
             ]
           },
@@ -74,11 +74,11 @@
                 {
                   "type": "anyComponentStyle",
                   "maximumWarning": "2kB",
-                  "maximumError": "8kB"
+                  "maximumError": "6kB"
                 }
               ],
               "outputHashing": "all",
-              "serviceWorker": "ngsw-config_aa.json"
+              "serviceWorker": "ngsw-config_ireka.json"
             },
             "development": {
               "optimization": false,
@@ -90,6 +90,9 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "allowedHosts": true
+          },
           "configurations": {
             "production": {
               "buildTarget": "leap-design-v3.4:build:production"
