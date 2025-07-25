@@ -78,9 +78,6 @@ export class AppComponent implements OnInit {
   offline = signal<boolean>(false);
 
   ngOnInit() {
-    // this.userService.getUser()
-    //   .subscribe((user) => {
-    // this.user = user;
     this.path.set(this.getPath());
     this.checkPath(this.path());
     document.querySelector('#manifest-placeholder').setAttribute('href', `${baseApi}/app/${this.path()}/manifest.json`);
