@@ -112,7 +112,6 @@ LEAP App Builder adopts a **building block** and **metadata-driven** approach, a
 
 As of now, there are **six active instances** of the LEAP App Builder platform:
 
-
 1. **LEAPMY** – Public and community instance  
 2. **IA** – Privately managed by UNIMAS  
 3. **AA** – Privately managed by UNIMAS  
