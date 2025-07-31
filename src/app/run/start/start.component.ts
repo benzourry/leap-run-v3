@@ -73,7 +73,7 @@ export class StartComponent implements OnInit, OnDestroy {
   offline = signal<boolean>(false);
   sidebarActive = signal<boolean>(false);
   frameless = computed(() => (getQuery('noframe') || localStorage.getItem('noframe')) === 'true');
-  pushDismissed = computed(() => localStorage.getItem('pushDismissed') === '1');
+  pushDismissed = signal(localStorage.getItem('pushDismissed') === '1');
   maintenance = computed(() => {
     const app = this.app();
     const path = this.getPath();
@@ -221,7 +221,7 @@ export class StartComponent implements OnInit, OnDestroy {
 
   dismissPush() {
     localStorage.setItem("pushDismissed", "1");
-    // this.pushDismissed.set(true);
+    this.pushDismissed.set(true);
   }
 
   toggleNav(index: number): void {
