@@ -47,6 +47,7 @@ export function compileTpl(templateText: string, data: any, scopeId: string): st
   let code = tplCache[tplHash];
 
   // Put variables in global if there is onclick handler
+  // ** New experimental
   const hasEvent = /on\w+="/.test(templateText);
   // const hasClick = templateText.includes('onclick="');
   if (hasEvent) {
@@ -90,9 +91,10 @@ export function compileTpl(templateText: string, data: any, scopeId: string): st
         // experimental replace event handler with regex
         .replace(/on\w+=\\\"(.+?)\\\"/g, (match, handlerCode) => {
           const globalHandler = handlerCode
-            .replace(/\$_\./g, `_entry_${scopeId}?.`)
-            .replace(/\$prev\$\./g, `_prev_${scopeId}?.`)
-            .replace(/\$\./g, `_data_${scopeId}?.`);
+            .replace(/\$_\./g, `_entry_${scopeId}.`)
+            .replace(/\$prev\$\./g, `_prev_${scopeId}.`)
+            .replace(/(?<!\$\w*)\$\./g, `_data_${scopeId}.`)
+            // .replace(/\$\./g, `_data_${scopeId}?.`);
           // Reconstruct the attribute name (e.g., onclick, onchange)
           const attrName = match.match(/(on\w+)=/)?.[1] ?? 'onunknown';
           return `${attrName}=\\\"${globalHandler}\\\"`;
@@ -989,27 +991,44 @@ export function convertQueryParams(queryParams: Record<string, string>): Record<
 export function createProxy (prop, fn?) {
   return new Proxy(prop, {
     set(target, prop, value) {
-      // notify('set', prop, value);
-      // console.log(`set prop to`, value);
-      // console.log("target",target,"prop",prop,"value",value)
-      // cdr.markForCheck();
       setTimeout(() =>  fn?.(prop, value), 0);
-      // setTimeout(() => fn(), 0);
       target[prop as keyof typeof target] = value;
       return true;
     },
     get(target, prop, receiver) {
       const orig = target[prop as keyof typeof target];
       if (typeof orig === 'function') {
-        // console.log(`get  function`);
         return function (...args: unknown[]) {
-          // cdr.markForCheck();
-          // fn?.();
-          // notify('call', prop, args);
           return orig.apply(this, args);
         };
       }
       return orig;
     }
   });
+}
+
+// Deep getter for any object (works with signals)
+export function getModel(obj: any, path: string): any {
+  const keys = path.split('.');
+  let value = obj;
+  for (const key of keys) {
+    if (value == null) return '';
+    value = value[key];
+  }
+  return value ?? '';
+}
+
+// Deep setter for any object (immutable, works with signals)
+export function setModel(obj: any, path: string, newValue: any): any {
+  const keys = path.split('.');
+  // Clone the root object
+  let result = { ...obj };
+  let temp = result;
+  for (let i = 0; i < keys.length - 1; i++) {
+    const key = keys[i];
+    temp[key] = { ...(temp[key] ?? {}) };
+    temp = temp[key];
+  }
+  temp[keys[keys.length - 1]] = newValue;
+  return result;
 }
