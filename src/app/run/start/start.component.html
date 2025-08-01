@@ -271,19 +271,19 @@
         }
       } @else {
         <div class="d-flex justify-content-center align-items-center flex-column wrapper m-a p-3">
-          @if (!app.logo) {
+          @if (!app().logo) {
             <img id="img-logo" class="mb-3" src="assets/icons/logo.svg" width="150" />
           }@else{
-            <img id="img-logo" class="mb-3" src="{{baseApi}}/app/logo/{{app.logo}}" style="max-width:240px" />
+            <img id="img-logo" class="mb-3" src="{{baseApi}}/app/logo/{{app().logo}}" style="max-width:240px" />
           }
           <div class="wrapper-in text-center">
-            @if (!app.live) {
+            @if (!app().live) {
               <div class="text-muted text-center my-3">
-                <h4><fa-icon [icon]="['fas','exclamation-triangle']" [fixedWidth]="true"></fa-icon> {{app.title}} is currently under maintenance.</h4>
+                <h4><fa-icon [icon]="['fas','exclamation-triangle']" [fixedWidth]="true"></fa-icon> {{app().title}} is currently under maintenance.</h4>
               </div>
             }@else{
               <div class="text-muted text-center my-3">
-                <h4><fa-icon [icon]="['fas','exclamation-triangle']" [fixedWidth]="true"></fa-icon> {{app.title}} is live at</h4>
+                <h4><fa-icon [icon]="['fas','exclamation-triangle']" [fixedWidth]="true"></fa-icon> {{app().title}} is live at</h4>
                 <a class="btn btn-primary mt-3" [href]="appUrl">{{appUrl}}</a>
               </div>
             }
