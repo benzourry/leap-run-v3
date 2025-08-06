@@ -19,7 +19,7 @@ import { Injectable } from '@angular/core';
 import { UserService } from './user.service';
 import { ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
 import { Observable, Subject } from 'rxjs';
-import { btoaUTF, getQuery } from '../utils';
+import { btoaUTF, getPath, getQuery } from '../utils';
 import { first } from 'rxjs/operators';
 import { OAUTH } from '../constant.service';
 // import { OAUTH } from '../../../assets/oauth-config.js';
@@ -45,11 +45,12 @@ export class AuthGuardService {
       let provider = getQuery("provider");
       let appId = getQuery("appId");
       let noframe = getQuery("noframe");
+      let appPath = encodeURIComponent(getPath());
 
       // cuma yg failed jk perlu redirect.. mn success/subject(true) xperlu, akan dihandle oleh route
       if (apiKey){
         window.localStorage.setItem("auth", btoaUTF(JSON.stringify({apiKey: apiKey}),null));
-        fetch(`${OAUTH.USER_URI}?appId=${appId}`, {headers: { Authorization: `ApiKey ${apiKey}`} })
+        fetch(`${OAUTH.USER_URI}?appId=${appId??''}&appPath=${appPath}`, {headers: { Authorization: `ApiKey ${apiKey}`} })
           .then(d => {
             d.json().then(f => {
               if (f.error) {
@@ -66,7 +67,7 @@ export class AuthGuardService {
           })
       }else if (accessToken) {
         // cannot pass as header, sbb tok ialah endpoint n nya perlu dipass as parameter
-        fetch(`${OAUTH.TOKEN_GET}?access_token=${accessToken}&provider=${provider}&appId=${appId}`)
+        fetch(`${OAUTH.TOKEN_GET}?access_token=${accessToken}&provider=${provider}&appId=${appId??''}&appPath=${appPath}`)
           .then(d => {
             d.json().then( f=> {
               if (f.auth) {
@@ -78,9 +79,15 @@ export class AuthGuardService {
                 }
                 subject.next(true);
               } else {
-                window.localStorage.setItem("error", JSON.stringify(f.error)+"<br><br>Do you wish to try again? If so, please click on the button below to continue.");
+                let split = f.message?.split('|');
+                if (split.length>1){
+                  provider = split[1];
+                  appId = split[2]
+                }
+                window.localStorage.setItem("error", split[0]??JSON.stringify(f.error)+"<br><br>Do you wish to try again? If so, please click on the button below to continue.");
+                // window.localStorage.setItem("error", JSON.stringify(f.error)+"<br><br>Do you wish to try again? If so, please click on the button below to continue.");
                 window.localStorage.setItem("redirect", state.url);
-                window.localStorage.setItem("nextUrl", `${OAUTH.AUTH_URI}/${provider}?appId=${appId}&redirect_uri=${encodeURIComponent(OAUTH.CALLBACK)}`);
+                window.localStorage.setItem("nextUrl", `${OAUTH.AUTH_URI}/${provider}?appId=${appId??''}&appPath=${appPath}&redirect_uri=${encodeURIComponent(OAUTH.CALLBACK)}`);
                 window.location.href = "/assets/error.html";
 
                 // window.location.href = `/assets/token.html?accessToken=${accessToken}&provider=${provider}&noframe=${noframe}`;
@@ -95,9 +102,15 @@ export class AuthGuardService {
           .then(d=>{
             d.json().then(f=>{
               if (f.error) {
-                window.localStorage.setItem("error", JSON.stringify(f.error)+"<br><br>Do you wish to try again? If so, please click on the button below to continue.");
+                let split = f.message?.split('|');
+                if (split.length>1){
+                  provider = split[1];
+                  appId = split[2]
+                }
+                window.localStorage.setItem("error", split[0]??JSON.stringify(f.error)+"<br><br>Do you wish to try again? If so, please click on the button below to continue.");
+                // window.localStorage.setItem("error", JSON.stringify(f.error)+"<br><br>Do you wish to try again? If so, please click on the button below to continue.");
                 window.localStorage.setItem("redirect", state.url);
-                window.localStorage.setItem("nextUrl", `${OAUTH.AUTH_URI}/${provider}?appId=${appId}&redirect_uri=${encodeURIComponent(OAUTH.CALLBACK)}`);
+                window.localStorage.setItem("nextUrl", `${OAUTH.AUTH_URI}/${provider}?appId=${appId??''}&appPath=${appPath}&redirect_uri=${encodeURIComponent(OAUTH.CALLBACK)}`);
                 window.location.href = "/assets/error.html";
                 subject.next(false);
 
@@ -117,7 +130,7 @@ export class AuthGuardService {
         window.localStorage.setItem("error", split[0]);
         //  `${OAUTH.AUTH_URI}/${server}?appId=-1&redirect_uri=${encodeURIComponent(OAUTH.CALLBACK)}`
         if (split.length>1){
-          window.localStorage.setItem("nextUrl", `${OAUTH.AUTH_URI}/${split[1]}?appId=${appId}&redirect_uri=${encodeURIComponent(OAUTH.CALLBACK)}`);
+          window.localStorage.setItem("nextUrl", `${OAUTH.AUTH_URI}/${split[1]}?appId=${appId??''}&appPath=${appPath}&redirect_uri=${encodeURIComponent(OAUTH.CALLBACK)}`);
         }      
 
         window.location.href = "/assets/error.html";

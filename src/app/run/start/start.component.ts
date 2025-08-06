@@ -25,7 +25,7 @@ import { baseApi, domainRegex, domainBase, base } from '../../_shared/constant.s
 import { Title } from '@angular/platform-browser';
 import { Subscription, lastValueFrom } from 'rxjs';
 import { PageTitleService } from '../../_shared/service/page-title-service';
-import { ServerDate, compileTpl, createProxy, deepMerge, getQuery, loadScript } from '../../_shared/utils';
+import { ServerDate, compileTpl, createProxy, deepMerge, getPath, getQuery, loadScript } from '../../_shared/utils';
 import { LogService } from '../../_shared/service/log.service';
 import { SwPush } from '@angular/service-worker';
 import { PushService } from '../../_shared/service/push.service';
@@ -293,14 +293,15 @@ export class StartComponent implements OnInit, OnDestroy {
     this.userService.logout();
   }
 
+  getPath = getPath;
 
-  getPath() {
-    if (window.location.host.indexOf(domainBase) > -1) {
-      return 'path:' + window.location.host.match(domainRegex)[1];
-    } else {
-      return 'domain:' + window.location.hostname;
-    }
-  }
+  // getPath() {
+  //   if (window.location.host.indexOf(domainBase) > -1) {
+  //     return 'path:' + window.location.host.match(domainRegex)[1];
+  //   } else {
+  //     return 'domain:' + window.location.hostname;
+  //   }
+  // }
 
   hideSb() {
     setTimeout(() => { this.sidebarActive.set(false) }, 300)

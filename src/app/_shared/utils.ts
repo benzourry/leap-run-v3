@@ -1,5 +1,5 @@
 import { formatNumber } from '@angular/common';
-import { baseApi } from './constant.service';
+import { baseApi, domainBase, domainRegex } from './constant.service';
 import dayjs from 'dayjs';
 import { marked } from 'marked';
 import mermaid from 'mermaid';
@@ -581,6 +581,14 @@ export function btoaUTF(str: string, key?: string): string {
   const binary = String.fromCharCode(...bytes);
 
   return btoa(binary);
+}
+
+export function getPath() {
+  if (window.location.host.indexOf(domainBase) > -1) {
+    return 'path:' + window.location.host.match(domainRegex)[1];
+  } else {
+    return 'domain:' + window.location.hostname;
+  }
 }
 
 // export function atobUTF(str) {
