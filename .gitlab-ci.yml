@@ -1,32 +1,29 @@
 image: node:20
 
 
+# workflow:
+#   rules:
+#     - changes:
+#         - src/**/*
+#     - when: never
 workflow:
   rules:
-    - changes:
-        - src/**/*
-    - when: never
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - if: '$CI_PIPELINE_SOURCE == "pipeline"'
+    - if: '$CI_PIPELINE_SOURCE == "trigger"'
 
-# stages:
-#   - build_devireka
-#   - deploy_devireka
-#   - build_ireka
-#   - deploy_ireka
-#   - build_ia
-#   - deploy_ia
-#   - build_aa
-#   - deploy_aa
-    
+stages:
+  - sync
+  - build
+  - deploy
+
 include:
   - local: '.gitlab/ci/devireka-ci.yml'
   - local: '.gitlab/ci/ireka-ci.yml'  
   - local: '.gitlab/ci/ia-ci.yml'
   - local: '.gitlab/ci/aa-ci.yml'
 
-stages:
-  - sync
-  - build
-  - deploy
 
 sync_from_github:
   stage: sync
@@ -43,19 +40,82 @@ sync_from_github:
     # Clone GitHub source repo
     - git clone https://oauth2:${GITHUB_TOKEN}@github.com/benzourry/leap-run-v3.git github-source
 
+    # # Replace only selected files/folders
+    # - rm -rf src && mkdir src
+    # - cp -r github-source/src/* src/
+    # - cp github-source/pom.xml .
     # Replace only selected files/folders
     - rm -rf src && mkdir src
     - cp -r github-source/src/* src/
     - cp github-source/angular*.json . || true
     - cp github-source/ngsw-config*.json . || true
-    - cp github-source/package.json .
+    - cp github-source/package.json . || true
+    - cp github-source/package-lock.json . || true
+    - cp github-source/README.md . || true
 
-    # Commit and push changes
-    - git add src angular*.json ngsw-config*.json package.json
-    - git commit -m "Sync from GitHub [CI]" || echo "No changes"
-    - git push https://blmrazif:${GITLAB_PAT}@codebucket.unimas.my/blmrazif/leap-run.git HEAD:main
+    # # Commit and push changes
+    # - git add src pom.xml
+    # - git commit -m "Sync from GitHub [CI]" || echo "No changes"
+    # - git push https://blmrazif:${GITLAB_PAT}@codebucket.unimas.my/blmrazif/leap-run.git HEAD:main
+
+
+    - git add src angular*.json ngsw-config*.json package.json package-lock.json README.md
+    - |
+      if git diff --cached --quiet; then
+        echo "No changes to commit. Skipping next stages."
+        echo "SHOULD_CONTINUE=false" >> sync_env.txt
+      else
+        git commit -m "Sync from GitHub [CI skip]"
+        git push https://blmrazif:${GITLAB_PAT}@codebucket.unimas.my/blmrazif/leap-run.git HEAD:main
+        echo "SHOULD_CONTINUE=true" >> sync_env.txt
+      fi
+
   rules:
     - if: '$CI_PIPELINE_SOURCE == "web"'         # manual run
       when: manual
     - if: '$CI_PIPELINE_SOURCE == "schedule"'    # scheduled run
       when: always
+
+# === GitHub Sync Job ===
+# sync_from_github:
+#   stage: sync
+#   tags:
+#     - reka-run
+    
+#   image: alpine:latest
+#   script:
+#     - apk add --no-cache git bash
+
+#     # Git config
+#     - git config --global user.email "ci-sync@leap.com"
+#     - git config --global user.name "LEAP CI Sync Bot"
+
+#     - git fetch --unshallow || true
+#     - git checkout main
+#     - git pull origin main --rebase || true
+
+#     # Clone GitHub source repo
+#     - git clone https://oauth2:${GITHUB_TOKEN}@github.com/benzourry/leap-run-v3.git github-source
+
+#     # Replace only selected files/folders
+#     - rm -rf src && mkdir src
+#     - cp -r github-source/src/* src/
+#     - cp github-source/angular*.json . || true
+#     - cp github-source/ngsw-config*.json . || true
+#     - cp github-source/package.json . || true
+#     - cp github-source/README.md . || true
+
+#     # Commit and push changes
+#     - git add src angular*.json ngsw-config*.json package.json README.md
+#     - |
+#       if git diff --cached --quiet; then
+#         echo "No changes to commit. Skipping next stages."
+#         echo "SHOULD_CONTINUE=false" >> sync_env.txt
+#       else
+#         git commit -m "Sync from GitHub [CI skip]"
+#         git push https://blmrazif:${GITLAB_PAT}@codebucket.unimas.my/blmrazif/leap-run.git HEAD:main
+#         echo "SHOULD_CONTINUE=true" >> sync_env.txt
+#       fi
+#   artifacts:
+#     reports:
+#       dotenv: sync_env.txt
