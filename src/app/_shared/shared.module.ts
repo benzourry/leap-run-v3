@@ -66,7 +66,8 @@ import {
     faExpand, faCompress, faToggleOn, faToggleOff, faMapMarkedAlt, faChartBar, faChartLine, faChartPie, faUsers, faWindowRestore, faShoppingBag, faShoppingCart, faSitemap, faUserEdit, faHistory, faRocket, faBox, faMailBulk, faInbox, faShareAlt, faPlay, faSync, faSort, faDiagramProject, faLayerGroup, faPhotoFilm, faFileInvoiceDollar, faAddressBook, faLaptopMedical, faMagnifyingGlassLocation, faPlane, faLocationDot, faLocationCrosshairs,
     faMicrophone,
     faAngleDoubleLeft,
-    faFileImport
+    faFileImport,
+    faHashtag,
 } from '@fortawesome/free-solid-svg-icons';
 import {
     faPlusSquare as farPlusSquare, faMinusSquare as farMinusSquare, faFlag as farFlag,
@@ -134,6 +135,6 @@ export class SharedModule {
             faReply, faQrcode, faShare, faTable, faList, farCircle, fasCircle, faFileExcel, faListAlt, faUpload, faAngleDoubleRight, faAngleDoubleLeft, faGlobe, faSort, faLock,
             faChartBar, faChartArea, faChartLine, faChartPie, faUsersCog, faUsers, faFileExport,faEllipsisH, faUncharted, faRobot, faFlag, farFlag, faImage, faBolt, faEye, faEyeSlash, faFileImport,
             faLocationCrosshairs, faLocationDot, faPlane, faMagnifyingGlassLocation, faLaptopMedical, faAddressBook, faFileInvoiceDollar, faPhotoFilm, faLayerGroup, faMessage, faDiagramProject, faFileLines,
-            faMicrophone, faClock);
+            faMicrophone, faClock, faHashtag);
     }
 }
