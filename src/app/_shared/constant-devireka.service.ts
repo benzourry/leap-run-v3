@@ -23,7 +23,7 @@ var full = location.protocol + '//' + location.hostname + (location.port ? ':' +
 export const baseApi = 'https://io.dev.ireka.my/api';   // prefer
 export const base = 'https://io.dev.ireka.my'; // prefer 
 
-export const domainRegex = /(?:http[s]*\:\/\/)*(.*?)\.(?=[^\/]*\.)?ireka\.my/;
+export const domainRegex = /(?:http[s]*\:\/\/)*(.*?)\.(?=[^\/]*\.)?dev\.ireka\.my/;
 export const domainBase = "dev.ireka.my";
 
 export const OAUTH = {
