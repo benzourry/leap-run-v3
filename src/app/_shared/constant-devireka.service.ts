@@ -24,7 +24,7 @@ export const baseApi = 'https://io.dev.ireka.my/api';   // prefer
 export const base = 'https://io.dev.ireka.my'; // prefer 
 
 export const domainRegex = /(?:http[s]*\:\/\/)*(.*?)\.(?=[^\/]*\.)?ireka\.my/;
-export const domainBase = "ireka.my";
+export const domainBase = "dev.ireka.my";
 
 export const OAUTH = {
         AUTH_URI : "https://io.dev.ireka.my/oauth2/authorize",
