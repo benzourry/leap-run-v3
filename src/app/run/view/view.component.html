@@ -118,19 +118,56 @@
                                   </div>
                                 </div>
                               }
-                                <!-- START NORMAL APPROVAL FORM -->
-                                @if (tier.section?.type=='approval') {
-                                  @if (tier.section && preCheckAppr(tier.section?.pre, appr[tier.id])) {
-                                    <div class="card-body bg-light bg-opacity-50">
-                                      <div class="row g-4"
-                                        [init]="updateWatchList(tier.section,appr[tier.id])">
-                                        @for (f of tier.section.items; track f.id) {
-                                          @let field = form()?.items[f.code];
-                                          @if (preCheckAppr(field?.pre, appr[tier.id])) {
-                                            @let dynDefVal = _eval(entry,entry?.data, appr[tier.id], field?.x?.dyn_default, form);
-                                            @defer(prefetch on idle){
+                              <!-- START NORMAL APPROVAL FORM -->
+                              @if (tier.section?.type=='approval') {
+                                @if (tier.section && preCheckAppr(tier.section?.pre, appr[tier.id])) {
+                                  <div class="card-body bg-light bg-opacity-50">
+                                    <div class="row g-4"
+                                      [init]="updateWatchList(tier.section,appr[tier.id])">
+                                      @for (f of tier.section.items; track f.id) {
+                                        @let field = form()?.items[f.code];
+                                        @if (preCheckAppr(field?.pre, appr[tier.id])) {
+                                          @let dynDefVal = _eval(entry,entry?.data, appr[tier.id], field?.x?.dyn_default, form);
+                                          @defer(prefetch on idle){
 
-                                              <!-- @let compileData = {
+                                            <!-- @let compileData = {
+                                              $app$: app(),
+                                              $_: entry,
+                                              $: entry?.data,
+                                              $$_: appr[tier.id],
+                                              $$: appr[tier.id]?.data,
+                                              $prev$: entry?.prev,
+                                              $user$: user(),
+                                              $conf$: appConfig,                                          
+                                              $action$: action(),                                          
+                                              $el$: form()?.items,
+                                              $form$: form(),
+                                              $this$: _this,                                          
+                                              $param$: param(),                                          
+                                              $base$: base,
+                                              $baseUrl$: baseUrl(),
+                                              $baseApi$: baseApi,        
+                                              $lookupList$: lookup,                                          
+                                              dayjs,
+                                              ServerDate,
+                                              $token$: accessToken(),
+                                              $file$: filesMap,
+                                              $activeIndex$: _navIndex(),
+                                            } -->
+
+                                            <field-edit [ngClass]="field.size||'col-sm-12'" name="{{f.code}}"
+                                              [scopeId]="scopeId()" [lang]="lang()"
+                                              [fileProgress]="uploadProgress[f.code+($index??'')]"
+                                              [class.mt-0]="field.subType=='clearfix'"
+                                              [hidden]="field.hidden"
+                                              [field]="field" [lookupList]="lookup[f.code]"
+                                              [(ngModel)]="appr[tier.id].data[f.code]"
+                                              (valueChange)="fieldChange($event,appr[tier.id],field, false)"
+                                              (valueSearch)="getLookupSearch($event,f.code,appr[tier.id],field.dataSourceInit)"
+                                              (fileValueChange)="onUpload($event,appr[tier.id].data,field, false)"
+                                              (fileValueClear)="onFileClear($event,appr[tier.id].data,field, false)"
+                                              (selectFocus)="getLookup(f.code,appr[tier.id],field.dataSourceInit)"
+                                              [data]="{
                                                 $app$: app(),
                                                 $_: entry,
                                                 $: entry?.data,
@@ -153,72 +190,35 @@
                                                 $token$: accessToken(),
                                                 $file$: filesMap,
                                                 $activeIndex$: _navIndex(),
-                                              } -->
-
-                                              <field-edit [ngClass]="field.size||'col-sm-12'" name="{{f.code}}"
-                                                [scopeId]="scopeId()" [lang]="lang()"
-                                                [fileProgress]="uploadProgress[f.code+($index??'')]"
-                                                [class.mt-0]="field.subType=='clearfix'"
-                                                [hidden]="field.hidden"
-                                                [field]="field" [lookupList]="lookup[f.code]"
-                                                [(ngModel)]="appr[tier.id].data[f.code]"
-                                                (valueChange)="fieldChange($event,appr[tier.id],field, false)"
-                                                (valueSearch)="getLookupSearch($event,f.code,appr[tier.id],field.dataSourceInit)"
-                                                (fileValueChange)="onUpload($event,appr[tier.id].data,field, false)"
-                                                (fileValueClear)="onFileClear($event,appr[tier.id].data,field, false)"
-                                                (selectFocus)="getLookup(f.code,appr[tier.id],field.dataSourceInit)"
-                                                [data]="{
-                                                  $app$: app(),
-                                                  $_: entry,
-                                                  $: entry?.data,
-                                                  $$_: appr[tier.id],
-                                                  $$: appr[tier.id]?.data,
-                                                  $prev$: entry?.prev,
-                                                  $user$: user(),
-                                                  $conf$: appConfig,                                          
-                                                  $action$: action(),                                          
-                                                  $el$: form()?.items,
-                                                  $form$: form(),
-                                                  $this$: _this,                                          
-                                                  $param$: param(),                                          
-                                                  $base$: base,
-                                                  $baseUrl$: baseUrl(),
-                                                  $baseApi$: baseApi,        
-                                                  $lookupList$: lookup,                                          
-                                                  dayjs,
-                                                  ServerDate,
-                                                  $token$: accessToken(),
-                                                  $file$: filesMap,
-                                                  $activeIndex$: _navIndex(),
-                                                  timestamp:timestamp()
-                                                }"
-                                                [required]="field?.v?.required"
-                                                [maxlength]="field?.v?.maxlength"
-                                                [minlength]="field?.v?.minlength"
-                                                [pattern]="field?.v?.pattern"                                                
-                                                [defaultValue]="field.x?.use_dyn_default?dynDefVal:field?.x?.default">
-                                              </field-edit>
-                                              
-                                              <!-- [data]="{$user$:user(), 
-                                                $conf$: appConfig,
-                                                $:entry?.data,
-                                                $_:entry,
-                                                $$:appr[tier.id].data,
-                                                $$_:appr[tier.id],
-                                                $base$:base,
-                                                $baseUrl$:baseUrl(),
-                                                $baseApi$:baseApi,
-                                                $this$:_this,
-                                                $param$:param(), 
-                                                $file$:filesMap}" -->
-                                            }
+                                                timestamp:timestamp()
+                                              }"
+                                              [required]="field?.v?.required"
+                                              [maxlength]="field?.v?.maxlength"
+                                              [minlength]="field?.v?.minlength"
+                                              [pattern]="field?.v?.pattern"                                                
+                                              [defaultValue]="field.x?.use_dyn_default?dynDefVal:field?.x?.default">
+                                            </field-edit>
+                                            
+                                            <!-- [data]="{$user$:user(), 
+                                              $conf$: appConfig,
+                                              $:entry?.data,
+                                              $_:entry,
+                                              $$:appr[tier.id].data,
+                                              $$_:appr[tier.id],
+                                              $base$:base,
+                                              $baseUrl$:baseUrl(),
+                                              $baseApi$:baseApi,
+                                              $this$:_this,
+                                              $param$:param(), 
+                                              $file$:filesMap}" -->
                                           }
                                         }
-                                      </div>
+                                      }
                                     </div>
-                                  }
+                                  </div>
                                 }
-                                <!-- END NORMAL APPROVAL FORM -->                             
+                              }
+                              <!-- END NORMAL APPROVAL FORM -->                             
                               @if (tier.canRemark) {
                                 <div class="card-body">
                                   <div class="form-group">
