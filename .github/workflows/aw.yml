@@ -60,5 +60,5 @@ jobs:
           username: ${{ secrets.SFTP_USER_AW }}
           key: ${{ secrets.SFTP_KEY_AW }}
           script: |
-            sudo chmod -R 755 /var/www/html/run
+            sudo chmod -R 775 /var/www/html/run
             sudo chown -R www-data:www-data /var/www/html/run
