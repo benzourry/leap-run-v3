@@ -15,7 +15,8 @@
 // You should have received a copy of the GNU General Public License
 // along with LEAP.  If not, see <http://www.gnu.org/licenses/>.
 
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject, OnDestroy, OnInit, signal, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UserService } from '../../_shared/service/user.service';
 import { ActivatedRoute, NavigationEnd, Params, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { UtilityService } from '../../_shared/service/utility.service';
@@ -29,7 +30,7 @@ import { ServerDate, compileTpl, createProxy, deepMerge, getPath, getQuery, load
 import { LogService } from '../../_shared/service/log.service';
 import { SwPush } from '@angular/service-worker';
 import { PushService } from '../../_shared/service/push.service';
-import { filter, first, take, tap } from 'rxjs/operators';
+import { filter, first, take, tap, switchMap } from 'rxjs/operators';
 import { SafePipe } from '../../_shared/pipe/safe.pipe';
 import { RegisterComponent } from '../register/register.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -66,6 +67,7 @@ export class StartComponent implements OnInit, OnDestroy {
   private logService = inject(LogService);
   private entryService = inject(EntryService);
   private cdr = inject(ChangeDetectorRef);
+  private destroyRef = inject(DestroyRef); // Used for modern subscription cleanup
 
   // Signals for state management
   appLoading = signal<boolean>(false);
@@ -132,20 +134,26 @@ export class StartComponent implements OnInit, OnDestroy {
 
   constructor() {
     this.location.onPopState(() => this.modalService.dismissAll(''));
-    this.utilityService.testOnline$().subscribe((online) => this.offline.set(!online));
-    this.swPush.notificationClicks.subscribe((arg) => {
-      console.log(
-        'Action: ' + arg.action,
-        'Notification data: ' + arg.notification.data,
-        'Notification data.url: ' + arg.notification.data.url,
-        'Notification data.body: ' + arg.notification.body
-      );
-    });
+    
+    this.utilityService.testOnline$()
+      .pipe(takeUntilDestroyed())
+      .subscribe((online) => this.offline.set(!online));
+      
+    this.swPush.notificationClicks
+      .pipe(takeUntilDestroyed())
+      .subscribe((arg) => {
+        console.log(
+          'Action: ' + arg.action,
+          'Notification data: ' + arg.notification.data,
+          'Notification data.url: ' + arg.notification.data.url,
+          'Notification data.body: ' + arg.notification.body
+        );
+      });
   }
 
   ngOnInit() {
 
-    window.localStorage.setItem('noframe', this.frameless() + '');
+    window.localStorage.setItem('noframe', String(this.frameless()));
 
     this.accessToken = this.userService.getToken();
 
@@ -163,56 +171,60 @@ export class StartComponent implements OnInit, OnDestroy {
       // writable: true,
     });  
 
-    this.userService.getUser()
-      .subscribe((user) => {
+    // Flattened the nested subscriptions using switchMap
+    this.userService.getUser().pipe(
+      takeUntilDestroyed(this.destroyRef),
+      tap((user) => {
         this.user.set(user);
-        this.userService.setUser(user);
+        this.userService.setUser(user); // Preserving V2 specific setting
         this.runService.$user.set(user);
         // console.log("loaded user", user)
+      }),
+      switchMap(() => this.route.params)
+    ).subscribe((params: Params) => {
+      this.$param$ = params;
+      this.appId = params['appId'];
+      if (this.appId) {
+        this.preurl = `/run/${this.appId}`;
+        this.runService.$preurl.set(this.preurl);
+        this.getApp(this.appId);
 
-        this.route.params
-          .subscribe((params: Params) => {
-            this.$param$ = params;
-            this.appId = params['appId'];
-            if (this.appId) {
-              this.preurl = `/run/${this.appId}`;
-              this.runService.$preurl.set(this.preurl);
-              this.getApp(this.appId);
-
-              if (!this.frameless()) {
-                this.getNavis(this.appId, this.user().email);
-                this.getNaviData(this.appId, this.user().email);
-              }
-              this.editMode = true;
-            } else {
-              this.getAppByPath(this.getPath());
-            }
-          });
-      })
-
-    this.subscription = this.pageTitleService.openAnnounced$.subscribe(
-      opened => {
-        this.sidebarActive.set(opened)
-      }
-    )
-
-    this.router.events
-    .pipe(filter(event => event instanceof NavigationEnd))
-    .subscribe((event: NavigationEnd) => {
-      // Check if navigated to root
-      if (this.router.url === '/' || this.router.url === '') {
-        // Wait for app() to be available, or use a fallback
-        const startPage = this.app()?.startPage || 'start';
-        // Prevent infinite loop if already at startPage
-        if (this.router.url !== `/${startPage}`) {
-          this.router.navigate([startPage], {
-            relativeTo: this.route,
-            queryParams: this.route.snapshot.queryParams,
-            replaceUrl: true // Optional: replaces history entry
-          });
+        if (!this.frameless()) {
+          this.getNavis(this.appId, this.user().email);
+          this.getNaviData(this.appId, this.user().email);
         }
+        this.editMode = true;
+      } else {
+        this.getAppByPath(this.getPath());
       }
     });
+
+    this.subscription = this.pageTitleService.openAnnounced$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(opened => {
+        this.sidebarActive.set(opened)
+      });
+
+    this.router.events
+      .pipe(
+        filter(event => event instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((event: NavigationEnd) => {
+        // Check if navigated to root
+        if (this.router.url === '/' || this.router.url === '') {
+          // Wait for app() to be available, or use a fallback
+          const startPage = this.app()?.startPage || 'start';
+          // Prevent infinite loop if already at startPage
+          if (this.router.url !== `/${startPage}`) {
+            this.router.navigate([startPage], {
+              relativeTo: this.route,
+              queryParams: this.route.snapshot.queryParams,
+              replaceUrl: true // Optional: replaces history entry
+            });
+          }
+        }
+      });
 
   }
 
@@ -236,6 +248,7 @@ export class StartComponent implements OnInit, OnDestroy {
       autoReg: false
     }
     this.runService.regAppUser(this.app().id, payload)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(res => {
         this.user.set(res.user);
         this.userService.setUser(res.user);
@@ -250,11 +263,15 @@ export class StartComponent implements OnInit, OnDestroy {
   checkPush(app) {
     if (app.canPush) {
       this.swPush.subscription
-        .pipe(take(1))
+        .pipe(
+          take(1),
+          takeUntilDestroyed(this.destroyRef)
+        )
         .subscribe(sub => {
           if (sub) {
             this.actualSub = sub;
             this.pushService.checkPush(sub.endpoint)
+              .pipe(takeUntilDestroyed(this.destroyRef))
               .subscribe(res => this.pushSub = res)
           }
         })
@@ -268,6 +285,7 @@ export class StartComponent implements OnInit, OnDestroy {
       .then(sub => {
         this.actualSub = sub;
         this.pushService.subscribePush(this.user().id, sub)
+          .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe(res => this.pushSub = res);
       })
       .catch(err => { this.pushSubError = { err: err }; console.log(err) });
@@ -276,6 +294,7 @@ export class StartComponent implements OnInit, OnDestroy {
 
   onceDone() {
     this.runService.onceDone(this.app().id, this.user().email, true)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: res => {
           this.user.set(res);
@@ -306,9 +325,11 @@ export class StartComponent implements OnInit, OnDestroy {
   hideSb() {
     setTimeout(() => { this.sidebarActive.set(false) }, 300)
   }
+  
   getAppByPath(path) {
     this.appLoading.set(true);
     this.runService.getRunAppByPath(path, { email: this.user().email })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: async (res) => {
           this.app.set(res);
@@ -324,6 +345,7 @@ export class StartComponent implements OnInit, OnDestroy {
           this.titleService.setTitle(res.title);
           if (res.once) {
             this.runService.getRunScreen(res.once)
+              .pipe(takeUntilDestroyed(this.destroyRef))
               .subscribe(screen => this.screen.set(screen));
           }
 
@@ -334,7 +356,8 @@ export class StartComponent implements OnInit, OnDestroy {
           if (!url) {
             if (res.startPage) {
               this.router.navigate([res.startPage], 
-                { relativeTo: this.route, 
+                { 
+                  relativeTo: this.route, 
                   queryParams: this.route.snapshot.queryParams,
                   replaceUrl: true // Optional: replaces history entry
                 });
@@ -360,6 +383,7 @@ export class StartComponent implements OnInit, OnDestroy {
   getApp(id) {
     this.appLoading.set(true);
     this.runService.getRunApp(id, { email: this.user().email })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: async (res) => {
           this.app.set(res);
@@ -368,6 +392,7 @@ export class StartComponent implements OnInit, OnDestroy {
           // this.isDev.set(res.email.indexOf(this.userService.getActualUser().email) > -1);
 
           this.runService.getAppUserByEmail(id, { email: this.user().email })
+            .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe(appUserList => {
               this.appUserList.set(appUserList);
             });
@@ -377,6 +402,7 @@ export class StartComponent implements OnInit, OnDestroy {
           }
           if (res.once) {
             this.runService.getRunScreen(res.once)
+              .pipe(takeUntilDestroyed(this.destroyRef))
               .subscribe(screen => this.screen.set(screen));
           }
           this.checkPush(res);
@@ -401,7 +427,8 @@ export class StartComponent implements OnInit, OnDestroy {
               // console.log('--no startpage', url);
               this.router.navigate(['start'], { 
                 relativeTo: this.route,
-                replaceUrl: true });
+                replaceUrl: true 
+              });
             }
           }
 
@@ -414,6 +441,7 @@ export class StartComponent implements OnInit, OnDestroy {
 
   getNavis(id, email) {
     this.runService.getNavis(id, email)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(res => {
         this.navis.set(res);
         this.runService.$navis.set(res);
@@ -431,6 +459,7 @@ export class StartComponent implements OnInit, OnDestroy {
 
   getNaviData(id, email) {
     this.runService.getNaviData(id, email)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(res => {
         this.naviData.set(res);
         this.runService.$naviData.set(res);
@@ -450,7 +479,7 @@ export class StartComponent implements OnInit, OnDestroy {
         let pre = f.pre.trim();
         res = this._pre(pre);//new Function('$', '$prev$', '$user$', 'return ' + f.pre)(this.entry.data, this.entry && this.entry.prev, this.user);
       }
-    } catch (e) { this.logService.log(`{start-${f?.code}-precheck}-${e}`) }
+    } catch (e) { this.logService.log(`{start-${f?.code}-precheck}-${e.message}`) }
     return !f.pre || res;
   }
 
@@ -480,14 +509,88 @@ export class StartComponent implements OnInit, OnDestroy {
 
   }
 
-  _pre = (v) => new Function('$app$', '$navi$', '$navis$', '$badge$', '$user$', '$conf$', '$this$', '$param$', 'ServerDate', '$base$', '$baseUrl$', '$baseApi$', '$token$', `return ${v}`)
-    (this.app(), this.naviData(), this.navis(), this.badge, this.user(), this.runService?.appConfig, this._this, this.$param$, ServerDate, this.base, this.baseUrl(), this.baseApi, this.accessToken);
+  // --- DRY Caching and Context Engine ---
 
-  // _eval = (v) => new Function('$app$', '$navi$', '$navis$', '$badge$', '$user$', '$conf$', '$this$','$loadjs$', '$param$','$http$', '$post$', '$endpoint$', 'ServerDate', '$base$', '$baseUrl$','$baseApi$', '$token$', `return ${v}`)
-  //   (this.app, this.naviData, this.navis, this.badge, this.user, this.runService?.appConfig, this._this, this.loadScript, this.$param$, this.httpGet, this.httpPost, this.endpointGet, ServerDate, this.base, this.baseUrl, this.baseApi, this.accessToken);
+  private compiledEvalCache = new Map<string, Function>();
+  private preCache = new Map<string, Function>();
 
-  _eval = async(v) => new Function('setTimeout','setInterval','$app$', '$_', '$', '$prev$', '$user$', '$conf$', '$http$', '$post$', '$endpoint$', '$this$', '$loadjs$', '$digest$', '$param$', '$log$', '$update$', '$updateLookup$', '$toast$', '$base$', '$baseUrl$', '$baseApi$', 'dayjs', 'ServerDate', 'echarts', '$live$', '$token$', '$merge$', '$web$', '$go', '$pop', '$q$', '$showNav$',
-    `return ${v}`)(this._setTimeout, this._setInterval, this.app(), {}, {}, {}, this.user(), this.runService?.appConfig, this.httpGet, this.httpPost, this.endpointGet, this._this, this.loadScript, this.$digest$, this.$param$, this.log, this.updateField, this.updateLookup, this.$toast$, this.base, this.baseUrl(), this.baseApi, dayjs, ServerDate, null, this.runService?.$live$(this.liveSubscription(), this.$digest$), this.accessToken, deepMerge, this.hybridWeb, null, null, this.$q, this.openNav);
+  private executeEval(code: string, bindings: Record<string, any>, cache: Map<string, Function>) {
+    if (!code) return undefined;
+    
+    const argNames = Object.keys(bindings);
+    const cacheKey = `${argNames.join(',')}_${code}`;
+    
+    let fn = cache.get(cacheKey);
+    if (!fn) {
+      fn = new Function(...argNames, `return ${code}`);
+      cache.set(cacheKey, fn);
+    }
+    
+    return fn(...Object.values(bindings));
+  }
+
+  getEvalContext = (isPassive: boolean = false, additionalParams: any = {}) => {
+    // Properties shared across ALL evaluations
+    const passive = {
+      $app$: this.app(),
+      $user$: this.user(),
+      $conf$: this.runService?.appConfig,
+      $this$: this._this,
+      $param$: this.$param$,
+      ServerDate,
+      $base$: this.base,
+      $baseUrl$: this.baseUrl(),
+      $baseApi$: this.baseApi,
+      $token$: this.accessToken,
+      ...additionalParams
+    };
+
+    if (isPassive) return passive;
+
+    // Properties only needed for active evaluation (_eval)
+    return {
+      ...passive,
+      setTimeout: this._setTimeout,
+      setInterval: this._setInterval,
+      $_: {},
+      $: {},
+      $prev$: {},
+      $http$: this.httpGet,
+      $post$: this.httpPost,
+      $endpoint$: this.endpointGet,
+      $loadjs$: this.loadScript,
+      $digest$: this.$digest$,
+      $log$: this.log,
+      $update$: this.updateField,
+      $updateLookup$: this.updateLookup,
+      $toast$: this.$toast$,
+      dayjs,
+      echarts: null,
+      $live$: this.runService?.$live$(this.liveSubscription(), this.$digest$),
+      $merge$: deepMerge,
+      $web$: this.hybridWeb,
+      $go: null,
+      $pop: null,
+      $q$: this.$q,
+      $showNav$: this.openNav
+    };
+  }
+
+  _pre = (v: string) => {
+    const bindings = this.getEvalContext(true, { 
+      $navi$: this.naviData(), 
+      $navis$: this.navis(), 
+      $badge$: this.badge 
+    });
+    return this.executeEval(v, bindings, this.preCache);
+  }
+
+  _eval = async (v: string) => {
+    const bindings = this.getEvalContext(false);
+    return this.executeEval(v, bindings, this.compiledEvalCache);
+  }
+
+  // --- End DRY Engine ---
 
   private wrapObservable<T>(obs: Observable<T>): Observable<T> & PromiseLike<T> {
     const thenable = obs as any;
@@ -500,13 +603,17 @@ export class StartComponent implements OnInit, OnDestroy {
     return thenable;
   }
 
+  private _hybridWebCache: any = null;
   get hybridWeb() {
-    return {
-      get: (url: string, opts?: any) => this.wrapObservable(this.http.get(url, opts)),
-      post: (url: string, body: any, opts?: any) => this.wrapObservable(this.http.post(url, body, opts)),
-      put: (url: string, body: any, opts?: any) => this.wrapObservable(this.http.put(url, body, opts)),
-      delete: (url: string, opts?: any) => this.wrapObservable(this.http.delete(url, opts)),
-    };
+    if (!this._hybridWebCache) {
+      this._hybridWebCache = {
+        get: (url: string, opts?: any) => this.wrapObservable(this.http.get(url, opts)),
+        post: (url: string, body: any, opts?: any) => this.wrapObservable(this.http.post(url, body, opts)),
+        put: (url: string, body: any, opts?: any) => this.wrapObservable(this.http.put(url, body, opts)),
+        delete: (url: string, opts?: any) => this.wrapObservable(this.http.delete(url, opts)),
+      };
+    }
+    return this._hybridWebCache;
   }
 
   compileTpl(html, data) {
@@ -514,7 +621,7 @@ export class StartComponent implements OnInit, OnDestroy {
     try {
       f = compileTpl(html, data, 'start');
     } catch (e) {
-      this.logService.log(`{start-compiletpl}-${e}`)
+      this.logService.log(`{start-compiletpl}-${e.message}`)
     }
     return f;
   }
@@ -524,7 +631,7 @@ export class StartComponent implements OnInit, OnDestroy {
     let jsTxt = this.compileTpl(js, { $param$: this.$param$, $this$: this._this, $user$: this.user(), $conf$: this.appConfig, $base$: base, $baseUrl$: this.baseUrl(), $baseApi$: baseApi })
     try {
       res = await this._eval(jsTxt);// new Function('$', '$prev$', '$user$', '$http$', 'return ' + f)(this.entry.data, this.entry && this.entry.prev, this.user, this.httpGet);
-    } catch (e) { this.logService.log(`{start-${this.app().title}-initNavi}-${e}`) }
+    } catch (e) { this.logService.log(`{start-${this.app().title}-initNavi}-${e.message}`) }
     this.runPre();
     return res;
   }
@@ -608,5 +715,9 @@ export class StartComponent implements OnInit, OnDestroy {
     Object.keys(this.liveSubscription()).forEach(key => this.liveSubscription()[key].unsubscribe());//.forEach(sub => sub.unsubscribe());
     this.intervalList.forEach(i => clearInterval(i));
     this.timeoutList.forEach(i => clearTimeout(i));
+
+    // Global cleanup
+    delete (window as any)._conf;
+    delete (window as any)._this_start;
   }
 }
