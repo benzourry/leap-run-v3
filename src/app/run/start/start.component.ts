@@ -109,8 +109,7 @@ export class StartComponent implements OnInit, OnDestroy {
 
   readonly baseApi = baseApi;
   readonly base = base;
-  readonly VAPID_PUBLIC_KEY =
-    'BIRiQCpjtaORtlvwZ7FzFkf8V799iGvEX1kQtO86y-BdiGpAMvXN4UDU1DWEqrpPEAiDDVilG8WKk62NjFc1Opo';
+  readonly VAPID_PUBLIC_KEY = 'BIRiQCpjtaORtlvwZ7FzFkf8V799iGvEX1kQtO86y-BdiGpAMvXN4UDU1DWEqrpPEAiDDVilG8WKk62NjFc1Opo';
 
   firstActiveSet: boolean = false;
 
@@ -227,7 +226,6 @@ export class StartComponent implements OnInit, OnDestroy {
       });
 
   }
-
 
 
   dismissPush() {
@@ -352,7 +350,6 @@ export class StartComponent implements OnInit, OnDestroy {
           this.appUrl = location.protocol + '//' + res.appPath + "." + domainBase;
 
           let url = this.router.url.split('?')[0].replace('/', ''); // utk check nya da /path x kt url. Mn xda, navigate ke startPage or /start
-
           if (!url) {
             if (res.startPage) {
               this.router.navigate([res.startPage], 
@@ -362,7 +359,6 @@ export class StartComponent implements OnInit, OnDestroy {
                   replaceUrl: true // Optional: replaces history entry
                 });
             } else {
-              // console.log('x ada startpage', url);
               this.router.navigate(['start'], { 
                 relativeTo: this.route,
                 replaceUrl: true });
