@@ -80,3 +80,4 @@ src/app/run/chart/chart-old.component.ts
 src/app/run/_service/run-old.service.ts
 src/app/run/form/form-asyncflag.component.ts
 src/app/run/_service/run-new.service.ts
+src/app/run/screen/mailbox/mailbox-old.component.html
