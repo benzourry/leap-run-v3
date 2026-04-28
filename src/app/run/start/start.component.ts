@@ -22,9 +22,9 @@ import { ActivatedRoute, NavigationEnd, Params, Router, RouterLink, RouterLinkAc
 import { UtilityService } from '../../_shared/service/utility.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PlatformLocation, NgClass, NgStyle } from '@angular/common';
-import { baseApi, domainRegex, domainBase, base } from '../../_shared/constant.service';
+import { baseApi, domainBase, base } from '../../_shared/constant.service';
 import { Title } from '@angular/platform-browser';
-import { Observable, Subscription, firstValueFrom, lastValueFrom } from 'rxjs';
+import { Observable, firstValueFrom, lastValueFrom } from 'rxjs';
 import { PageTitleService } from '../../_shared/service/page-title-service';
 import { ServerDate, compileTpl, createProxy, deepMerge, getPath, getQuery, loadScript } from '../../_shared/utils';
 import { LogService } from '../../_shared/service/log.service';
@@ -83,6 +83,7 @@ export class StartComponent implements OnInit, OnDestroy {
   });
   darkMode = signal<boolean>(false);
   app = signal<any>(null);
+  lang = computed(() => this.app().x?.lang); 
   user = signal<any>(null);
   navis = signal<any[]>([]);
   naviData = signal<any>(null);
@@ -100,7 +101,7 @@ export class StartComponent implements OnInit, OnDestroy {
       location.hostname +
       (location.port ? ':' + location.port : '') +
       '/#' +
-      this.preurl
+      this.preurl()
     );
   });
   startPage = computed(() => this.app()?.startPage ?? 'start');
@@ -118,9 +119,8 @@ export class StartComponent implements OnInit, OnDestroy {
   active = false;
   path: string;
 
-  preurl: string = '';
+  preurl = signal<string>('');
   appId: number;
-  subscription: Subscription;
   getIcon = (str) => str ? str.split(":") : ['far', 'file'];
   $param$: any = {};
   accessToken: string = '';
@@ -156,6 +156,7 @@ export class StartComponent implements OnInit, OnDestroy {
 
     this.accessToken = this.userService.getToken();
 
+    // might also consider using proxy and $digest$ for any changes
     this.appConfig = this.runService.appConfig;
 
     Object.defineProperty(window, '_conf', {
@@ -163,9 +164,9 @@ export class StartComponent implements OnInit, OnDestroy {
       configurable: true,   // so you can delete it later 
       // writable: true,
     });  
+
     Object.defineProperty(window, '_this_start', {
       get: () => this._this,
-      // value: this._this,
       configurable: true,   // so you can delete it later 
       // writable: true,
     });  
@@ -184,8 +185,8 @@ export class StartComponent implements OnInit, OnDestroy {
       this.$param$ = params;
       this.appId = params['appId'];
       if (this.appId) {
-        this.preurl = `/run/${this.appId}`;
-        this.runService.$preurl.set(this.preurl);
+        this.preurl.set(`/run/${this.appId}`);
+        this.runService.$preurl.set(this.preurl());
         this.getApp(this.appId);
 
         if (!this.frameless()) {
@@ -198,7 +199,7 @@ export class StartComponent implements OnInit, OnDestroy {
       }
     });
 
-    this.subscription = this.pageTitleService.openAnnounced$
+    this.pageTitleService.openAnnounced$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(opened => {
         this.sidebarActive.set(opened)
@@ -224,7 +225,6 @@ export class StartComponent implements OnInit, OnDestroy {
           }
         }
       });
-
   }
 
 
@@ -365,9 +365,9 @@ export class StartComponent implements OnInit, OnDestroy {
             }
           }
 
+          this.appLoading.set(false);
           this.checkPush(res);
           await this.initScreen(res.f);
-          this.appLoading.set(false);
         },
         error: (err) => {
           // this.validPath.set(false);
@@ -384,8 +384,6 @@ export class StartComponent implements OnInit, OnDestroy {
         next: async (res) => {
           this.app.set(res);
           this.runService.$app.set(res);
-
-          // this.isDev.set(res.email.indexOf(this.userService.getActualUser().email) > -1);
 
           this.runService.getAppUserByEmail(id, { email: this.user().email })
             .pipe(takeUntilDestroyed(this.destroyRef))
@@ -409,7 +407,7 @@ export class StartComponent implements OnInit, OnDestroy {
           // utk check nya da /path x kt url. Mn xda, navigate ke startPage or /start
           // utk run dari designer nya xjln, sbb sentiasa da /run/<app-id>
           let url = this.router.url.split('?')[0]
-            .replace(this.preurl, '')
+            .replace(this.preurl(), '')
             .replace('/', '');
 
           if (!url) {
@@ -420,7 +418,6 @@ export class StartComponent implements OnInit, OnDestroy {
                 replaceUrl: true
               });
             } else {
-              // console.log('--no startpage', url);
               this.router.navigate(['start'], { 
                 relativeTo: this.route,
                 replaceUrl: true 
@@ -502,7 +499,6 @@ export class StartComponent implements OnInit, OnDestroy {
     this.preGroup.set(updatedPreGroup);
     this.preItem.set(updatedPreItem);
     this.navToggle.set(updatedNavToggle);
-
   }
 
   // --- DRY Caching and Context Engine ---
@@ -615,7 +611,7 @@ export class StartComponent implements OnInit, OnDestroy {
   compileTpl(html, data) {
     var f = "";
     try {
-      f = compileTpl(html, data, 'start');
+      f = compileTpl(html, data,'start');
     } catch (e) {
       this.logService.log(`{start-compiletpl}-${e.message}`)
     }
@@ -682,7 +678,6 @@ export class StartComponent implements OnInit, OnDestroy {
       ));
   }
 
-    
   timeoutList: any[] = [];
   _setTimeout = (functionRef, delay, ...param) => {
     let timeoutId = setTimeout(() => {

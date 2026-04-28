@@ -81,3 +81,4 @@ src/app/run/_service/run-old.service.ts
 src/app/run/form/form-asyncflag.component.ts
 src/app/run/_service/run-new.service.ts
 src/app/run/screen/mailbox/mailbox-old.component.html
+src/app/run/start/start-old.component.html
