@@ -54,12 +54,12 @@ export class UserService {
     return this.http.post<any>(`${this.base}/auth/changepwd`, cred);
   }
 
-  resetPwd(email: string, appId:number) {
+  resetPwd(email: string, appId: number) {
     return this.http.post<any>(`${this.base}/auth/resetpwd?email=${email}&appId=${appId}`, {});
   }
 
-  setUser(user){
-    window.localStorage.setItem("user", btoaUTF(JSON.stringify(user),null));
+  setUser(user) {
+    window.localStorage.setItem("user", btoaUTF(JSON.stringify(user), null));
   }
 
   // getUser(): Observable<any> {
@@ -102,78 +102,72 @@ export class UserService {
 
   getUser(): Observable<any> {
     const server = localStorage.getItem('server');
-    // const user = localStorage.getItem('user');
-    // const userexp = localStorage.getItem('userexp');
-    
-    // NO NEED FOR MANUAL USER-INFO CACHE. USE SW.
-    // if (user && !userexp) {
-    //   const userStr = atobUTF(user);
-    //   const accessToken = this.getToken();
-    //   this.user = of(JSON.parse(userStr));
-    //   return this.user;
-    // } else {
-    //   if (!localStorage.getItem('auth')) {
-    //     window.location.href = `${OAUTH.AUTH_URI}/${server}?redirect_uri=${OAUTH.CALLBACK}`;
-    //     return of();
-    //   } else {
-        var keyType, keyValue;
-        var auth = this.getAuth();
-        if (auth.accessToken){
-          keyType = "access_token";
-          keyValue = auth.accessToken;
-        }else{
-          keyType = "api_key";
-          keyValue = auth.apiKey;
+    var keyType, keyValue;
+    var auth = this.getAuth();
+    if (auth.accessToken) {
+      keyType = "access_token";
+      keyValue = auth.accessToken;
+    } else {
+      keyType = "api_key";
+      keyValue = auth.apiKey;
+    }
+    return this.http.get<any>(`${OAUTH.USER_URI}?${keyType}=${keyValue}`).pipe(
+      tap({
+        next: (res) => {
+          window.localStorage.setItem('user', btoaUTF(JSON.stringify(res), null));
+          this.user = of(res);
+          // window.localStorage.removeItem('userexp');
+        },
+        error: () => {
+          if (server) {
+            // if ada server info
+            window.location.href = `${OAUTH.AUTH_URI}/${server}?redirect_uri=${OAUTH.CALLBACK}`;
+          } else {
+            // else redirect to login
+            this.router.navigate(['/login']);
+          }
         }
-        return this.http.get<any>(`${OAUTH.USER_URI}?${keyType}=${keyValue}`).pipe(
-          tap({
-            next: (res) => {
-              window.localStorage.setItem('user', btoaUTF(JSON.stringify(res),null));
-              this.user = of(res);
-              // window.localStorage.removeItem('userexp');
-            },
-            error: () => {
-              if (server){
-                // if ada server info
-                window.location.href = `${OAUTH.AUTH_URI}/${server}?redirect_uri=${OAUTH.CALLBACK}`;
-              }else{
-                // else redirect to login
-                this.router.navigate(['/login']);
-              }
-            }
-          }),
-          first()
-        );
-      // }
-    // }
+      }),
+      first()
+    );
   }
 
-  getToken = () =>  {
-    // #####TO-DO need to change to atob later when the time is ready;
-    var authStr=atobUTF(localStorage.getItem("auth"),null);
-    return JSON.parse(authStr).accessToken;
-  };
+  getToken() {
+    return this.getAuth()?.accessToken || null;
+  }
 
-  getAuth = () => {
-    const server = localStorage.getItem('server');
-    if (!localStorage.getItem('auth'))
-      window.location.href = `${OAUTH.AUTH_URI}/${server}?redirect_uri=${OAUTH.CALLBACK}`;
+  getAuth() {
+    const authStr = localStorage.getItem("auth");
 
-    // #####TO-DO need to change to atob later when the time is ready;
-    var authStr = atobUTF(localStorage.getItem("auth"),null);
-    return JSON.parse(authStr);
-  };
+    // 1. If auth exists, try to parse and return it
+    if (authStr) {
+      try {
+        return JSON.parse(atobUTF(authStr, null));
+      } catch {
+        console.warn("Auth data corrupted, forcing re-login...");
+        // Do not return null here; let it fall through to the redirect!
+      }
+    }
 
-  public clearStorage(attr){
+    // 2. If auth is MISSING or CORRUPTED, redirect and stop execution
+    const server = localStorage.getItem('server') || '';
+    window.location.href = `${OAUTH.AUTH_URI}/${server}?redirect_uri=${OAUTH.CALLBACK}`;
+    
+    return null;
+  }
+
+  public clearStorage(attr) {
     attr.split(',').forEach(att => {
       localStorage.removeItem(att);
     });
-    // localStorage.removeItem("auth");
-    // localStorage.removeItem("user");
-    // localStorage.removeItem("server");
   }
+
   public logout() {
     this.clearStorage('auth,user,server,pushDismissed');
-    this.router.navigate(['/login']);
+
+    this.http.post(`${base}/oauth2/logout`, {}).subscribe({
+      next: () => this.router.navigate(['/login']),
+      error: () => this.router.navigate(['/login']) // Still navigate on error
+    });
   }
 }
