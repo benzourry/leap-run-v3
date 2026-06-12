@@ -96,7 +96,7 @@ export class AuthGuardService {
               };
             })
           })
-      } else if (token) {
+      } else if (token) { // after OAuth2 authentication, token will be passed as query parameter
         window.localStorage.setItem("auth", btoaUTF(JSON.stringify({accessToken: token}),null));
         fetch(`${OAUTH.USER_URI}`, { headers: { Authorization: "Bearer " + token } })
           .then(d=>{

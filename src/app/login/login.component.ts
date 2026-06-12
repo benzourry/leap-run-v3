@@ -147,18 +147,16 @@ export class LoginComponent implements OnInit {
             accessToken: token
           };
           window.localStorage.setItem("auth", btoaUTF(JSON.stringify(auth),null));
-          fetch(OAUTH.USER_URI, { headers: { 'Authorization': 'Bearer ' + token } })
-            .then(function (response) {
-              response.json().then(function (json) {
+          fetch(OAUTH.USER_URI, { headers: { 'Authorization': 'Bearer ' + token } })          
+            .then(res => res.json())
+            .then(json => {
                 if (!json.error) {
                   window.localStorage.setItem("user", btoaUTF(JSON.stringify(json),null));
-                  location.href = window.localStorage.getItem("redirect") ? "/#" + window.localStorage.getItem("redirect") : OAUTH.FINAL_URI;
+                  location.href = this.redirect ? "/#" + this.redirect : OAUTH.FINAL_URI;
                 } else {
                   alert(json.error);
                   this.error.set(json.error);
                 }
-
-              });
             });
 
         } else {
