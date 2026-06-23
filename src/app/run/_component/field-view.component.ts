@@ -106,7 +106,7 @@ import { MorphHtmlDirective } from '../../_shared/directive/morph-html.directive
 
         <div>
             <div #textContainer class="print-expand"
-              style="overflow:hidden; transition: max-height 0.3s ease-in-out;" 
+              style="overflow:hidden; transition: max-height 0.25s ease-in-out;" 
               [ngStyle]="{'max-height': isReadMore() ? (contentHeight() + 'px') : '150px'}"
               [class.fade-bottom]="!isReadMore() && isOverflowing()">
               
