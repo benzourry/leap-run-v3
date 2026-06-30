@@ -527,7 +527,7 @@ export class StartComponent implements OnInit, OnDestroy {
     
     let fn = cache.get(cacheKey);
     if (!fn) {
-      fn = new Function(...argNames, `return ${safeAccess(code)}`);
+      fn = new Function(...argNames, `return ${code}`);
       cache.set(cacheKey, fn);
     }
     
