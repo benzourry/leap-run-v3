@@ -26,7 +26,7 @@ import { baseApi, domainBase, base } from '../../_shared/constant.service';
 import { Title } from '@angular/platform-browser';
 import { Observable, firstValueFrom, lastValueFrom } from 'rxjs';
 import { PageTitleService } from '../../_shared/service/page-title-service';
-import { ServerDate, compileTpl, createProxy, deepMerge, getPath, getQuery, loadScript, safeAccess} from '../../_shared/utils';
+import { ServerDate, compileTpl, createProxy, deepMerge, getPath, getQuery, loadScript} from '../../_shared/utils';
 import { LogService } from '../../_shared/service/log.service';
 import { SwPush } from '@angular/service-worker';
 import { PushService } from '../../_shared/service/push.service';
