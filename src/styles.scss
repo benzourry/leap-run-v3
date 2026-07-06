@@ -25,6 +25,10 @@ body {
   overflow-x: hidden;
 }
 
+body:has(app-editor),body:has(app-design-home) {
+  background-color: #f5f5f5;
+}
+
 html, body {
   overscroll-behavior-y: contain;
 }
@@ -47,6 +51,9 @@ a {
 /* ==========================================================================
    3. BRAND BACKGROUNDS
    ========================================================================== */
+.bg-plain{
+  background-color: #f5f5f5;
+}
 .bg-reka {
   &.leap-my,
   &.aw-sarawakskills-edu-my,

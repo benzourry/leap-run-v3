@@ -124,8 +124,8 @@
                         <fa-icon class="ms-1" [icon]="['fas', navToggle()?.[$index] ? 'angle-up' : 'angle-down']" [fixedWidth]="true"></fa-icon>
                       </div>
                       
-                      @if (navToggle()[$index]) {
-                        <div class="menu-items mb-1">
+                      <!-- @if (navToggle()[$index]) { -->
+                        <div [ngbCollapse]="!navToggle()?.[$index]" class="menu-items mb-1">
                           @for (item of group.items; track item.id) {
                             @let naviDataItem = naviData()?.[item.type + '-' + item.screenId];
                             
@@ -163,7 +163,7 @@
                             }
                           }
                         </div>
-                      }
+                      <!-- } -->
                     </div>
                   }
                 }
