@@ -1,5 +1,5 @@
 @if (appLoading()) {
-  <div class="p-5 text-centered">
+  <div class="p-5 text-center">
     <div class="lds-ellipsis">
       <div></div>
       <div></div>
@@ -20,7 +20,7 @@
   }
   @if (!serverDown()) {
     @if (!pathExist()) {
-      <div class="text-centered">
+      <div class="text-center">
         <div class="pt-5 text-muted">
           <fa-icon [icon]="['fas','exclamation-triangle']" [fixedWidth]="true" size="5x"></fa-icon>
         </div>
@@ -33,7 +33,7 @@
       <router-outlet></router-outlet>
     }
   } @else {
-    <div class="text-centered">
+    <div class="text-center">
       <div class="pt-5 text-muted">
         <fa-icon [icon]="['fas','exclamation-triangle']" [fixedWidth]="true" size="5x"></fa-icon>
       </div>
