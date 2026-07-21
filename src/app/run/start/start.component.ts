@@ -89,6 +89,7 @@ export class StartComponent implements OnInit, OnDestroy {
   user = signal<any>(null);
   navis = signal<any[]>([]);
   naviData = signal<any>(null);
+  badge = signal<any>({});
   appUserList = signal<any[]>([]);
   liveSubscription = signal<Record<string, any>>({});
   preGroup = signal<Record<string, boolean>>({});
@@ -133,7 +134,6 @@ export class StartComponent implements OnInit, OnDestroy {
   firstActiveSet: boolean = false;
 
   editMode: boolean = false;
-  badge: any;
   active = false;
   path: string;
 
@@ -208,6 +208,7 @@ export class StartComponent implements OnInit, OnDestroy {
         this.preurl.set(`/run/${this.appId}`);
         this.runService.$preurl.set(this.preurl());
         this.getApp(this.appId);
+        this.getStart(this.appId);
 
         if (!this.frameless()) {
           this.getNavis(this.appId, this.user().email);
@@ -247,6 +248,15 @@ export class StartComponent implements OnInit, OnDestroy {
       });
   }
 
+  getStart(id: number) {
+    if (id) {
+      this.runService.getStartBadge(id, this.user().email)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(res => {
+          this.badge.set(res);
+        });
+    }
+  }
 
   dismissPush() {
     localStorage.setItem("pushDismissed", "1");
@@ -369,6 +379,7 @@ export class StartComponent implements OnInit, OnDestroy {
           if (!this.frameless()) {
             this.getNavis(res.id, this.user().email);
             this.getNaviData(res.id, this.user().email);
+            this.getStart(res.id);
           }
           if (res.layout == 'topnav') {
             this.navToggle.set({});
@@ -605,7 +616,7 @@ export class StartComponent implements OnInit, OnDestroy {
     const bindings = this.getEvalContext(true, { 
       $navi$: this.naviData(), 
       $navis$: this.navis(), 
-      $badge$: this.badge 
+      $badge$: this.badge() 
     });
     return this.executeEval(v, bindings, this.preCache);
   }
