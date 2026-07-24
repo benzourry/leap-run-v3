@@ -375,6 +375,8 @@ export class StartComponent implements OnInit, OnDestroy {
       .subscribe({
         next: async (res) => {
           this.app.set(res);
+          const currentLang = this.lang() === 'ms' ? 'ms-my' : 'en';
+          dayjs.locale(currentLang);
           // console.log("getAppByPath", this.app());
           this.runService.$app.set(res);
           if (!this.frameless()) {
@@ -415,7 +417,7 @@ export class StartComponent implements OnInit, OnDestroy {
             .subscribe(res => {
               this.mailboxBadge.set(res);
             });
-            
+
           this.appLoading.set(false);
           this.checkPush(res);
           await this.initScreen(res.f);
@@ -434,6 +436,9 @@ export class StartComponent implements OnInit, OnDestroy {
       .subscribe({
         next: async (res) => {
           this.app.set(res);
+          const currentLang = this.lang() === 'ms' ? 'ms-my' : 'en';
+          dayjs.locale(currentLang);
+
           this.runService.$app.set(res);
 
           this.runService.getAppUserByEmail(id, { email: this.user().email })
