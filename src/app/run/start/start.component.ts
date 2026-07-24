@@ -110,6 +110,7 @@ export class StartComponent implements OnInit, OnDestroy {
   startPage = computed(() => this.app()?.startPage ?? 'start');
   // isDev = computed(() => this.app()?.email.indexOf(this.userService.getActualUser().email) > -1);
   screen = signal<any>(null);
+  mailboxBadge = signal<number>(0);
 
   
   // --- Cookie Banner Signals ---
@@ -409,6 +410,12 @@ export class StartComponent implements OnInit, OnDestroy {
             }
           }
 
+          this.runService.countUnreadNotification(this.app().id, this.user().email)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(res => {
+              this.mailboxBadge.set(res);
+            });
+            
           this.appLoading.set(false);
           this.checkPush(res);
           await this.initScreen(res.f);
@@ -468,6 +475,12 @@ export class StartComponent implements OnInit, OnDestroy {
               });
             }
           }
+
+          this.runService.countUnreadNotification(this.app().id, this.user().email)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(res => {
+              this.mailboxBadge.set(res);
+          });
 
           this.appLoading.set(false);
 
