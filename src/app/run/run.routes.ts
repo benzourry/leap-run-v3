@@ -21,6 +21,7 @@ export const RUN_ROUTES: Routes = [
         { path: 'user/:groupId', loadComponent: () => import('./user/user.component').then(mod => mod.UserComponent) },
         { path: 'profile', loadComponent: () => import('./profile/profile.component').then(mod => mod.ProfileComponent)},
         { path: 'mailbox', loadComponent: () => import('./screen/mailbox/mailbox-web.component').then(mod => mod.MailboxWebComponent)},
+        { path: 'webui/:path', loadComponent: () => import('./web/web.component').then(mod => mod.WebComponent)},
         { path: 'start', loadComponent: () => import('./tiles/tiles.component').then(mod => mod.TilesComponent)},
         { path: 'path/:encodedUrl', redirectTo: (urlInfo)=>{
             let decodedUrl = atob(urlInfo.params.encodedUrl);
@@ -46,6 +47,7 @@ export const RUN_ROUTES: Routes = [
         { path: 'user/:groupId', loadComponent: () => import('./user/user.component').then(mod => mod.UserComponent) },
         { path: 'profile', loadComponent: () => import('./profile/profile.component').then(mod => mod.ProfileComponent)},
         { path: 'mailbox', loadComponent: () => import('./screen/mailbox/mailbox-web.component').then(mod => mod.MailboxWebComponent)},
+        { path: 'webui/:path', loadComponent: () => import('./web/web.component').then(mod => mod.WebComponent)},
         { path: 'start', loadComponent: () => import('./tiles/tiles.component').then(mod => mod.TilesComponent)}
   
       ],
