@@ -17,66 +17,70 @@
 
 import { NgModule } from '@angular/core';
 import { FaIconLibrary } from '@fortawesome/angular-fontawesome';
+// --- SOLID ICONS ---
 import {
-    faCheckSquare, faSquare, 
-    faTh, faPlusCircle, 
-    faPencilAlt, faCog, faTrash, faPlus,
-    faThLarge, faSignOutAlt, faSave, faAngleRight, faFile, faTimes, faTachometerAlt, faPlusSquare,
-    faListOl, faCalendar, faPaperPlane, faQuestion, faArrowUp, faArrowDown, 
-    faInfoCircle, faArrowLeft, faArrowRight, faExclamationTriangle, faReply, faShare, faCheck,
-    faUpload, faCircle as fasCircle,
-    faAngleDoubleRight,
-    faGlobe,
-    faLock,
-    faListAlt,
-    faFileExcel,
-    faTable,
-    faFilter,
-    faQrcode,
-    faList,
-    faAsterisk, 
-    faUniversity,
-    faEllipsisH,
-    faSearch,
-    faCopy,
-    faChevronLeft,
-    faChevronRight,
-    faPrint,
-    faFileCsv,
-    faFilePdf,
-    faStream,
-    faAngleUp,
-    faAngleDown,
-    faTasks,
-    faEdit,
-    faFlag,
-    faUsersCog,
-    faChartArea,
-    faRobot,
-    faFileExport, faImage, faBolt,
-    faExpand, faCompress, faToggleOn, faToggleOff, faMapMarkedAlt, faChartBar, faChartLine, faChartPie, faUsers, faWindowRestore, faShoppingBag, faShoppingCart, faSitemap, faUserEdit, faHistory, faRocket, faBox, faMailBulk, faInbox, faShareAlt, faPlay, faSync, faSort, faDiagramProject, faLayerGroup, faPhotoFilm, faFileInvoiceDollar, faAddressBook, faLaptopMedical, faMagnifyingGlassLocation, faPlane, faLocationDot, faLocationCrosshairs,
-    faMicrophone,
-    faAngleDoubleLeft,
-    faFileImport,
-    faHashtag,
-    faSignature,
-    faFolder, faFolder as farFolder,
-    faLink,
-    faRandom,
-    faSliders,
-    faCodeBranch
+    faAddressBook, faAlignCenter, faAlignJustify, faAlignLeft, faAlignRight,
+    faAngleDoubleLeft, faAngleDoubleRight, faAngleDown, faAngleLeft, faAngleRight, faAngleUp,
+    faArrowDown, faArrowLeft, faArrowRight, faArrowUp, faAsterisk, faBan, faBars, faBell, faBolt,
+    faBookmark, faBox, faCalendar, faChartArea, faChartBar, faChartLine, faChartPie, faCheck,
+    faCheckCircle, faCheckSquare, faChevronLeft, faChevronRight, faCircleNodes, faCircleNotch,
+    faCloud, faCloudDownloadAlt, faCloudUploadAlt, faCode, faCodeBranch, faCog, faCompress,
+    faCopy, faCreditCard, faDatabase, faDiagramProject, faDownload, faEdit, faEllipsisH,
+    faEllipsisV, faExclamationCircle, faExclamationTriangle, faExpand, faExternalLinkAlt,
+    faFile, faFileCsv, faFileExcel, faFileExport, faFileImport, faFileInvoiceDollar, faFilePdf,
+    faFileWaveform, faFilter, faFlag, faFolder, faGlobe, faGripVertical, faHashtag, faHeart,
+    faHexagonNodes, faHistory, faHome, faIdCard, faImage, faInbox, faInfoCircle, faKey,
+    faLaptopMedical, faLayerGroup, faLink, faList, faListAlt, faListOl, faLocationCrosshairs,
+    faLocationDot, faLock, faMagnifyingGlassLocation, faMailBulk, faMapMarkedAlt, faMicrophone,
+    faMinus, faMinusSquare, faMobileAlt, faMoneyBillWave, faPaperclip, faPaperPlane, faPen,
+    faPencilAlt, faPhone, faPhotoFilm, faPlane, faPlay, faPlus, faPlusCircle, faPlusSquare,
+    faPrint, faQrcode, faQuestion, faQuidditch, faRandom, faReceipt, faRedo, faReply, faRobot,
+    faRocket, faSave, faSearch, faServer, faShare, faShareAlt, faShieldAlt, faShoppingBag,
+    faShoppingCart, faSignInAlt, faSignOutAlt, faSignature, faSitemap, faSliders, faSort,
+    faSpinner, faSquare, faStar, faStop, faStream, faSync, faTable, faTachometerAlt, faTag,
+    faTags, faTasks, faTerminal, faTh, faThLarge, faTimes, faTimesCircle, faToggleOff,
+    faToggleOn, faTrash, faUndo, faUniversity, faUnlock, faUpload, faUserEdit, faUserPlus,
+    faUserShield, faUsers, faUsersCog, faWindowRestore, faCircle as fasCircle
 } from '@fortawesome/free-solid-svg-icons';
+
+// --- REGULAR (OUTLINE) ICONS ---
 import {
-    faPlusSquare as farPlusSquare, faMinusSquare as farMinusSquare, faFlag as farFlag,
-    faCircleUser, faEye,
-    faCircle as farCircle, faFile as farFile, faCheckSquare as farCheckSquare, faSquare as farSquare, faUser, faCaretSquareDown, faEnvelope, faCalendarAlt, faQuestionCircle, faCommentDots, faThumbsUp, faFileArchive, faMessage,
+    faBell as farBell,
+    faBookmark as farBookmark,
+    faCalendarAlt,
+    faCaretSquareDown,
+    faCheckSquare as farCheckSquare,
+    faCircle as farCircle,
+    faCircleUser,
     faClock,
+    faCommentDots,
+    faCreditCard as farCreditCard,
+    faEnvelope,
+    faEye,
+    faEyeSlash,
+    faFile as farFile,
+    faFileArchive,
+    faFileCode,
     faFileLines,
-    faEyeSlash
+    faFlag as farFlag,
+    faFolder as farFolder,
+    faHeart as farHeart,
+    faIdCard as farIdCard,
+    faMessage,
+    faMinusSquare as farMinusSquare, // <-- REGULAR OUTLINE MINUS SQUARE HERE
+    faPlusSquare as farPlusSquare,
+    faQuestionCircle,
+    faSquare as farSquare,
+    faStar as farStar,
+    faThumbsUp,
+    faUser
 } from '@fortawesome/free-regular-svg-icons';
+
+// --- BRAND ICONS ---
 import {
-    faGoogle, faFacebookF, faGithub, faLinkedin, faWpforms, faMicrosoft, faTwitter, faUncharted
+    faFacebookF, faGithub, faGoogle, faLinkedin, faMicrosoft, faTwitter, faUncharted, faWpforms
 } from '@fortawesome/free-brands-svg-icons';
+import { library } from '@fortawesome/fontawesome-svg-core';
 import { rxStompServiceFactory } from './service/rx-stomp-service-factory';
 import { RxStompService } from './service/rx-stomp.service';
 
@@ -92,16 +96,47 @@ import { RxStompService } from './service/rx-stomp.service';
     // declarations: []
 })
 export class SharedModule {
-    constructor(library: FaIconLibrary) {
+    constructor(faLibrary: FaIconLibrary) {
+        
+        const myIcons = [
+            // --- SOLID ICONS ---
+            faAddressBook, faAlignCenter, faAlignJustify, faAlignLeft, faAlignRight,
+            faAngleDoubleLeft, faAngleDoubleRight, faAngleDown, faAngleLeft, faAngleRight, faAngleUp,
+            faArrowDown, faArrowLeft, faArrowRight, faArrowUp, faAsterisk, faBan, faBars, faBell, faBolt,
+            faBookmark, faBox, faCalendar, faChartArea, faChartBar, faChartLine, faChartPie, faCheck,
+            faCheckCircle, faCheckSquare, faChevronLeft, faChevronRight, faCircleNodes, faCircleNotch,
+            faCloud, faCloudDownloadAlt, faCloudUploadAlt, faCode, faCodeBranch, faCog, faCompress,
+            faCopy, faCreditCard, faDatabase, faDiagramProject, faDownload, faEdit, faEllipsisH,
+            faEllipsisV, faExclamationCircle, faExclamationTriangle, faExpand, faExternalLinkAlt,
+            faFile, faFileCsv, faFileExcel, faFileExport, faFileImport, faFileInvoiceDollar, faFilePdf,
+            faFileWaveform, faFilter, faFlag, faFolder, faGlobe, faGripVertical, faHashtag, faHeart,
+            faHexagonNodes, faHistory, faHome, faIdCard, faImage, faInbox, faInfoCircle, faKey,
+            faLaptopMedical, faLayerGroup, faLink, faList, faListAlt, faListOl, faLocationCrosshairs,
+            faLocationDot, faLock, faMagnifyingGlassLocation, faMailBulk, faMapMarkedAlt, faMicrophone,
+            faMinus, faMinusSquare, faMobileAlt, faMoneyBillWave, faPaperclip, faPaperPlane, faPen,
+            faPencilAlt, faPhone, faPhotoFilm, faPlane, faPlay, faPlus, faPlusCircle, faPlusSquare,
+            faPrint, faQrcode, faQuestion, faQuidditch, faRandom, faReceipt, faRedo, faReply, faRobot,
+            faRocket, faSave, faSearch, faServer, faShare, faShareAlt, faShieldAlt, faShoppingBag,
+            faShoppingCart, faSignInAlt, faSignOutAlt, faSignature, faSitemap, faSliders, faSort,
+            faSpinner, faSquare, faStar, faStop, faStream, faSync, faTable, faTachometerAlt, faTag,
+            faTags, faTasks, faTerminal, faTh, faThLarge, faTimes, faTimesCircle, faToggleOff,
+            faToggleOn, faTrash, faUndo, faUniversity, faUnlock, faUpload, faUserEdit, faUserPlus,
+            faUserShield, faUsers, faUsersCog, faWindowRestore, fasCircle,
+
+            // --- REGULAR ICONS ---
+            farBell, farBookmark, faCalendarAlt, faCaretSquareDown, farCheckSquare, farCircle,
+            faCircleUser, faClock, faCommentDots, farCreditCard, faEnvelope, faEye, faEyeSlash,
+            farFile, faFileArchive, faFileCode, faFileLines, farFlag, farFolder, farHeart,
+            farIdCard, faMessage, farMinusSquare, farPlusSquare, faQuestionCircle, farSquare,
+            farStar, faThumbsUp, faUser,
+
+            // --- BRAND ICONS ---
+            faFacebookF, faGithub, faGoogle, faLinkedin, faMicrosoft, faTwitter, faUncharted, faWpforms
+        ];
+
         // library.addIconPacks(fas);
-        library.addIcons(faExpand, faCompress, faEdit, faTasks,faChevronLeft, faPrint, faWpforms, faChevronRight, faGoogle, faFacebookF, faUniversity, faGithub, faLinkedin, faCheckSquare, faCheck, faSquare, faTh, faPlusCircle, faPencilAlt, faCog, faTrash, faPlus,faTimes,faCopy,
-            faFileExcel, faFileCsv, faFilePdf, faSave, faStream, farFile, faMicrosoft, faTwitter, faQuestionCircle, faWindowRestore,faShoppingBag,faShoppingCart,faSitemap,faCommentDots, faThumbsUp,
-            farCheckSquare, farSquare, faSignOutAlt, faAngleDown, faAngleUp, faRandom, faToggleOn, faToggleOff, faMapMarkedAlt,faUserEdit, faHistory, faRocket, faBox, faMailBulk, faInbox, faShareAlt, faPlay, faSync,
-            faThLarge, faEnvelope, faSearch,faCircleUser, faFilter, faAsterisk, faCaretSquareDown, faUser, faSignOutAlt, faSave, faAngleRight, faFile, faLink, faTimes, faTachometerAlt, faPlusSquare, farPlusSquare, farMinusSquare,
-            faListOl, faCalendar, faCalendarAlt, faPaperPlane, faQuestion, faArrowUp, faArrowDown, faInfoCircle, faAngleRight, faArrowLeft, faArrowRight, faExclamationTriangle, faFileArchive,
-            faReply, faQrcode, faShare, faTable, faList, farCircle, fasCircle, faFileExcel, faListAlt, faUpload, faAngleDoubleRight, faAngleDoubleLeft, faGlobe, faSort, faLock,
-            faChartBar, faChartArea, faChartLine, faChartPie, faUsersCog, faUsers, faFileExport,faEllipsisH, faUncharted, faRobot, faFlag, farFlag, faImage, faBolt, faEye, faEyeSlash, faFileImport,
-            faLocationCrosshairs, faLocationDot, faPlane, faMagnifyingGlassLocation, faLaptopMedical, faAddressBook, faFileInvoiceDollar, faPhotoFilm, faLayerGroup, faMessage, faDiagramProject, faFileLines,
-            faMicrophone, faClock, faHashtag, faSignature, faFolder, faSliders, farFolder, faCodeBranch);
+        faLibrary.addIcons(...myIcons);
+        
+        library.add(...myIcons);
     }
 }
