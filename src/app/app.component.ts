@@ -28,6 +28,7 @@ import { RouterOutlet } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ToastsContainer } from './run/_component/toasts-container.component';
 import { RunService } from './run/_service/run.service';
+import { ThemeService } from './_shared/service/theme.service';
 // import { Title } from '@angular/platform-browser';
 // import { Meta } from '@angular/platform-browser';
 
@@ -43,6 +44,7 @@ export class AppComponent implements OnInit {
   private swUpdate = inject(SwUpdate)
   private utilityService = inject(UtilityService)
   private ngbConfig = inject(NgbConfig)
+  private themeService = inject(ThemeService);
 
   title = 'app';
   path = signal<string>('');
