@@ -816,7 +816,7 @@ export function convertQueryParams(queryParams: Record<string, string>): Record<
 export function createProxy (prop, fn?) {
   return new Proxy(prop, {
     set(target, prop, value) {
-      setTimeout(() =>  fn?.(prop, value), 0);
+      setTimeout(() => fn?.(prop, value), 0);
       target[prop as keyof typeof target] = value;
       return true;
     },
@@ -828,6 +828,10 @@ export function createProxy (prop, fn?) {
         };
       }
       return orig;
+    },
+    deleteProperty(target, prop) {
+      delete target[prop as keyof typeof target];
+      return true;
     }
   });
 }
