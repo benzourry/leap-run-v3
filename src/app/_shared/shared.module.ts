@@ -75,7 +75,8 @@ import {
     faStar as farStar,
     faThumbsUp,
     faUser,
-    faCamera
+    faCamera,
+    faPaste
 } from '@fortawesome/free-regular-svg-icons';
 
 // --- BRAND ICONS ---
@@ -130,7 +131,7 @@ export class SharedModule {
             faCircleUser, faClock, faCommentDots, farCreditCard, faEnvelope, faEye, faEyeSlash,
             farFile, faFileArchive, faFileCode, faFileLines, farFlag, farFolder, farHeart,
             farIdCard, faMessage, farMinusSquare, farPlusSquare, faQuestionCircle, farSquare,
-            farStar, faThumbsUp, faUser, faCamera, faLaptopFile,
+            farStar, faThumbsUp, faUser, faCamera, faLaptopFile, faPaste,
 
             // --- BRAND ICONS ---
             faFacebookF, faGithub, faGoogle, faInstagram, faLinkedin, faMicrosoft, faTwitter, faUncharted, faWpforms, faWhatsapp, faYoutube
