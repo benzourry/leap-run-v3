@@ -188,7 +188,7 @@ input.search-icon[type="search"] {
 .card-subtitle { font-weight: 300; }
 
 .card.card-clean {
-  border-radius: 12px;
+  border-radius: 1.5rem;
   border: none;
 }
 
@@ -586,7 +586,6 @@ ngb-pagination ul.pagination { justify-content: center; }
 .card-blank-style .card-body {
     padding: 0 !important;
 }
-
 
 @keyframes intermittent-shake {
   /* 0% to 70% does nothing (about a 1-second pause) */
