@@ -24,7 +24,7 @@
   .table img {
     max-width: 150px !important;
   }
-  
+
   .browser-window {
     .modal-dialog {
       height: calc(100% - 60px) !important;
@@ -63,13 +63,6 @@ table.tbl-child {
   }
 }
 
-// table.tblcard > .list-tmid > tr > td.td-list {
-//   padding: 0 !important;
-//   &::before {
-//     padding: 0.5rem 1rem !important;
-//   }
-// }
-
 .ds-table .ds-thead {
   position: sticky;
   top: 0;
@@ -83,19 +76,24 @@ table.tbl-child {
       top: 1em;
       bottom: 1em;
       left: -1px;
-      // width: 1px;
-      // background: var(--bs-border-color);
       border-left: solid 1px var(--bs-border-color);
     }
   }
 }
 
 /* ==========================================================================
-   COMPONENTS & ACTIONS
+   COMPONENTS & ACTIONS (DEFAULT / DESKTOP TABLE STYLE)
    ========================================================================== */
 .ds-action .btn {
   border-radius: 2rem;
   box-shadow: 0px 1px 3px 0px rgba(0, 0, 0, 0.07);
+}
+
+.tblcard .btn-responsive-sm {
+  --bs-btn-padding-y: 0.25rem;
+  --bs-btn-padding-x: 0.5rem;
+  --bs-btn-font-size: 0.875rem;
+  border-radius: 0.5rem;
 }
 
 .ds-action-items {
@@ -109,12 +107,9 @@ table.tbl-child {
   pointer-events: none;
 }
 
-.toolbar:not(:has(*)) {
-  display: none !important;
-}
-
+.toolbar:not(:has(*)),
 .status-filter-tier:not(:has(.form-check)) {
-  display: none;
+  display: none !important;
 }
 
 .ds-check .form-check-input {
@@ -136,34 +131,16 @@ table.tbl-child {
 }
 
 /* ==========================================================================
-   MEDIA QUERIES
+   MOBILE & CARD LAYOUT MIXIN (Powered by CSS Grid)
    ========================================================================== */
-@media print {
-  .table-print {
-    width: 100%;
-    
-    tr td,
-    tr th {
-      padding: 0.5em;
-      font-size: 0.7em;
-      border: 1px solid var(--bs-border-color);
-    }
-  }
-}
-
-@media screen and (max-width: 576px) {
+@mixin mobile-card-layout {
   table.tbl-child {
     border-left: solid 5px var(--bs-border-color);
+    tr th { padding-top: 0; }
   }
 
-  table.tbl-child tr th{
-    padding-top:0;
-  }
-  // table.tbl-child tr:last-child td{
-  //   padding-bottom:0;
-  // }
-
-  table.tblcard {
+  /* Support multiple ways this mixin might be called (.forceCard or .tblcard) */
+  &, table.tblcard, table.forceCard {
     border: 0;
     background-color: transparent !important;
 
@@ -178,47 +155,84 @@ table.tbl-child {
       width: 1px;
     }
 
-    /* 1. Add specific card boundary styling for the aggregate row */
     > .ds-agg > tr {
       display: block;
-      // margin-top: 1rem;
-      // margin-bottom: 0.5rem;
       background: var(--bs-body-bg);
       border: 2px dashed var(--bs-border-color);
       border-width: 2px 0;
-      // border-radius: var(--bs-border-radius);
       overflow: hidden;
     }
 
     .ds-action {
-      padding: 0.5rem 1rem 1rem !important;
+      position: absolute !important;
+      bottom: 0;
+      left: 0;
+      width: 100%;
 
-      /* OVERRIDE INPUT-GROUP ON MOBILE */
+      padding: 0.5rem 1rem 1rem !important;
+      background: var(--bs-body-bg); /* Matches card background so scrolling text doesn't show through */
+
       .ds-action-wrapper {
-        gap: 0.5rem !important; /* Overrides the inline [style.gap]="'0'" */
-        
+        gap: 0.5rem !important;
         > .btn, 
         > .ds-action-dropdown > .btn {
-          flex: 0 0 auto !important; /* Stops buttons from stretching full width */
+          flex: 0 0 auto !important; 
           width: auto !important;
-          margin-left: 0 !important; /* Removes Bootstrap's joined negative margin */
-          border-radius: 2rem !important; /* Restores your custom pill shape */
+          margin-left: 0 !important; 
+          border-radius: 2rem !important; 
         }
       }
     }
 
-    /* 2. Group .list-tmid and .ds-agg so they share all the same td and .ds-item styles */
+    .btn-action-more {
+      padding: 0.25rem 0;
+      font-size: 1.2rem;
+      border: none !important;
+      box-shadow: none !important;
+    }
+
+    /* ---------------------------------------------------
+       GRID LAYOUT FOR CARDS (Handles both Mobile & Desktop)
+       --------------------------------------------------- */
+    > .list-tmid {
+      display: grid;
+      gap: 0.75rem;
+      grid-template-columns: 1fr; /* Mobile Default: 1 column flushed card */
+      
+      /* Desktop Breakpoint: Apply columns if specified in dataset */
+      @media screen and (min-width: 576px) {
+        &[data-grid="col-6"] { grid-template-columns: repeat(2, 1fr); }
+        &[data-grid="col-4"] { grid-template-columns: repeat(3, 1fr); }
+        &[data-grid="col-3"] { grid-template-columns: repeat(4, 1fr); }
+      }
+    }
+
+    /* Shared Row / Card Styling */
     > .list-tmid > tr,
     > .ds-agg > tr {
       &.ds-row {
         display: block;
-        margin-bottom: .5em;
+        // flex-direction: column;
+        margin-bottom: 0; /* Gap handles spacing natively in grid */
         overflow: hidden;
         background: var(--bs-body-bg);
+        height: 100%; /* Stretch equally in multi-column rows */
+        
+        position: relative; /* Anchor for the absolute action bar */
+        /* Optional: Gives card definition when laid out in multi-column desktop */
+       
+
+        &:has(.ds-action) {
+          padding-bottom: 4.5rem; 
+        }
+
       }
 
       &.ds-group-header {
+        grid-column: 1 / -1; /* Header spans across all columns */
         box-shadow: none;
+        border: none;
+        background: transparent;
         .acc-btn {
           background: transparent !important;
           font-size: 1rem;
@@ -228,16 +242,15 @@ table.tbl-child {
       &.selected-row {
         background-color: rgba(var(--bs-primary-rgb), 0.15);
         outline: solid 2px var(--bs-primary);
+        border-color: transparent;
 
         > td {
           background-color: transparent;
-
           &.ds-check,
           &.ds-index {
             background-color: rgb(var(--bs-primary-rgb)) !important;
             color: white !important;
           }
-
           &.ds-status {
             background-color: transparent; 
           }
@@ -260,11 +273,8 @@ table.tbl-child {
           border-bottom: 0;
         }
 
-        /* Hide empty placeholder columns completely on mobile (Used by ds-agg) */
         &.bg-transparent,
-        &.d-none {
-          display: none !important;
-        }
+        &.d-none { display: none !important; }
 
         &.ds-check,
         &.ds-index {
@@ -272,26 +282,19 @@ table.tbl-child {
           padding: 0.35rem 1rem;
           margin: 1rem 0 0.5rem;
           display: inline-block;
-          border-bottom: none;
           font-size: 1rem;
           background-color: var(--bs-secondary-bg) !important;
           color: var(--bs-secondary-color) !important;
-          border-top-right-radius: 0.5rem;
-          border-bottom-right-radius: 0.5rem;
-          // border: solid 1px var(--bs-border-color);
-          // border-left: none;
+          border-radius: 0 0.5rem 0.5rem 0;
         }
 
         &.ds-check:has(+ .ds-index) {
-          border-top-right-radius: 0;
-          border-bottom-right-radius: 0;
+          border-radius: 0;
           padding-right: 0.25rem; 
-          border-right:none;
+          border-right: none;
         }
 
-        &.ds-check {
-          text-align: left;
-        }
+        &.ds-check { text-align: left; }
 
         &.ds-status {
           background-color: var(--bs-secondary-bg);
@@ -302,12 +305,9 @@ table.tbl-child {
         }
 
         &.ds-item {
-          &:first-child {
-            padding-top: 20px;
-          }
-          &.last-ds-item::after {
-            display:none;
-          }
+          &:first-child { padding-top: 20px; }
+          
+          &.last-ds-item::after,
           &:not(:has(~ .ds-item:not(.bg-transparent, .d-none)))::after {
             display: none;
           }
@@ -332,11 +332,57 @@ table.tbl-child {
             height: 0;
             border-bottom: 1px solid var(--bs-border-color-translucent);
           }
+
+          &.title, &.subtitle, &.bleed, &.tags {
+            text-align: start;
+            &::before, &::after { display: none; }
+          }
+          
+          &.title {
+            padding-bottom: 0;
+            * { font-size: 1.5rem; }
+          }
+          
+          &.subtitle * { font-size: 1rem; }
+          
+          &.bleed { 
+            margin: 0 0 0.5rem; 
+            padding: 0;             
+            // max-height: 380px;
+            // overflow:hidden;
+            ::ng-deep .data-bleed {
+              max-width: 100% !important; 
+              width: 100%;
+              display: block; 
+            }
+          }          
+          &.tags { 
+            margin: 0.5rem 1rem; 
+            padding: 0; 
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem; /* Spacing between multiple pills */
+
+            ::ng-deep .lookup-item {
+              display: inline-block; 
+              margin-right: 0.25rem;
+              margin-bottom: 0.25rem;
+              padding: 0.25rem 0.65rem;
+              font-size: 0.75rem; /* Slightly smaller text for tags */
+              font-weight: 500;
+              line-height: 1.2;
+              color: var(--bs-primary); /* Primary text */
+              background-color: rgba(var(--bs-primary-rgb), 0.1); /* Soft primary background */
+              border: 1px solid rgba(var(--bs-primary-rgb), 0.15); /* Subtle border */
+              border-radius: 50rem; /* Creates the fully rounded pill shape */
+              white-space: nowrap; /* Prevents text from breaking into two lines inside the pill */
+            }
+          }
+
+
         }
 
-        > .clearfix {
-          display: none;
-        }
+        > .clearfix { display: none; }
 
         > field-view {
           font-size: 0.9rem;
@@ -354,27 +400,40 @@ table.tbl-child {
   }
 }
 
-
-@media (min-width: 576px) {
-  .tblcard .btn-responsive-sm {
-    --bs-btn-padding-y: 0.25rem;
-    --bs-btn-padding-x: 0.5rem;
-    --bs-btn-font-size: 0.875rem;
-    // --bs-btn-border-radius: var(--bs-border-radius-sm);
-    border-radius: 0.5rem;
+/* ==========================================================================
+   APPLY MEDIA QUERIES & MIXINS
+   ========================================================================== */
+@media print {
+  .table-print {
+    width: 100%;
+    tr td, tr th {
+      padding: 0.5em;
+      font-size: 0.7em;
+      border: 1px solid var(--bs-border-color);
+    }
   }
 }
 
-@media (max-width: 575.98px) {
-  .tblcard .btn-action-more {
-    padding: 0.25rem 0;
-    font-size: 1.2rem;
-    border:none !important;
-    box-shadow: none !important;
+/* Mobile Screens */
+@media screen and (max-width: 575.98px) {
+  @include mobile-card-layout;
+}
+@media screen and (min-width: 576px) {
+  .ds-row{
+    border: 1px solid var(--bs-border-color-translucent);
+    border-radius: var(--bs-border-radius, 0.5rem);
+  }
+  .ds-row.selected-row{
+    border:none;
+  }
+  .forceCard{    
+    .outer-pad{
+      padding: 0 1rem 1rem;
+    }
   }
 }
 
-/* Ensures the wrapper doesn't trap the positioning */
-// .dropdown-wrapper-static {
-//   position: static !important;
-// }
+/* Forced Card View (Any screen size) */
+.forceCard {
+  @include mobile-card-layout;
+}
