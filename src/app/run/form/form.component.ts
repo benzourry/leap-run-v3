@@ -1510,8 +1510,6 @@ export class FormComponent implements OnInit, OnDestroy, ComponentCanDeactivate 
   getEvalContext = (entry: any, data: any, approval: any, form: any, includeActive: boolean = false, additionalData: any = {}) => {
     
     const targetForm = form || this.form();
-    // const isMainForm = targetForm?.id === this.form()?.id;
-    // console.log("isMainForm", isMainForm, form.id)
 
     const passive = {
       $editable$: additionalData?.$editable$ ?? true,
@@ -1532,7 +1530,6 @@ export class FormComponent implements OnInit, OnDestroy, ComponentCanDeactivate 
       $form$: this.getFormProxy(targetForm),
       // though this._this is here, it will be overridden with additionalData in other part (ie: initForm)
       $this$: this._this,
-      // $this$: this._this,
       $param$: this.param(),
       $base$: this.base,
       $baseUrl$: this.baseUrl(),
