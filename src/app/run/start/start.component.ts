@@ -53,7 +53,6 @@ import { ThemeToggleComponent } from '../_component/theme-toggle.component';
 })
 export class StartComponent implements OnInit, OnDestroy {
 
-
   private userService = inject(UserService);
   private swPush = inject(SwPush);
   private pushService = inject(PushService);
@@ -70,7 +69,7 @@ export class StartComponent implements OnInit, OnDestroy {
   private logService = inject(LogService);
   private entryService = inject(EntryService);
   private cdr = inject(ChangeDetectorRef);
-  private destroyRef = inject(DestroyRef); // Used for modern subscription cleanup
+  private destroyRef = inject(DestroyRef);
 
   // Signals for state management
   appLoading = signal<boolean>(false);
@@ -89,6 +88,20 @@ export class StartComponent implements OnInit, OnDestroy {
   lang = computed(() => this.app().x?.lang); 
   user = signal<any>(null);
   navis = signal<any[]>([]);
+  
+  // Bottom Navigation Signals & Computeds
+  sideNavGroups = computed(() => this.navis().filter(g => g.x?.type !== 'bottom'));
+  bottomNavGroups = computed(() => this.navis().filter(g => g.x?.type === 'bottom'));
+  currentPath = signal<string>(this.router.url.split('?')[0]);
+  startPage = computed(() => this.app()?.startPage ?? 'start');
+  isStartPage = computed(() => {
+    const start = this.startPage();
+    const current = this.currentPath();
+    return current.endsWith('/' + start) || current === '/' + start;
+  });
+  isPeekExpanded = signal<boolean>(false);
+  activeBottomNavIndex = signal<number>(0);
+
   naviData = signal<any>(null);
   badge = signal<any>({});
   appUserList = signal<any[]>([]);
@@ -96,11 +109,9 @@ export class StartComponent implements OnInit, OnDestroy {
   preGroup = signal<Record<string, boolean>>({});
   preItem = signal<Record<string, boolean>>({});
   navToggle = signal<Record<number, boolean>>({});
-  get appConfig(): any {
-    return this.runService.appConfig;
-  }
-  // appConfig: any = this.runService.appConfig;
-  // baseUrl = signal<string>('');
+  
+  get appConfig(): any { return this.runService.appConfig; }
+  
   baseUrl = computed(() => {
     return (
       location.protocol +
@@ -111,32 +122,18 @@ export class StartComponent implements OnInit, OnDestroy {
       this.preurl()
     );
   });
-  startPage = computed(() => this.app()?.startPage ?? 'start');
-  // isDev = computed(() => this.app()?.email.indexOf(this.userService.getActualUser().email) > -1);
+  
   screen = signal<any>(null);
   mailboxBadge = signal<number>(0);
 
-  
   // --- Cookie Banner Signals ---
   private readonly cookieConsentName = 'app_cookie_consent';
-  
-  // Tracks if the user has already made a choice (either accepted or rejected)
   cookieConsentStatus = signal<boolean>(false); 
-
-  // Automatically calculates if the banner should be shown based on app config AND user consent
-  showCookieBanner = computed(() => {
-    const hasBannerConfig = !!this.app()?.x?.cookieBanner;
-    const hasConsented = this.cookieConsentStatus();
-    return hasBannerConfig && !hasConsented;
-  });
-
-
+  showCookieBanner = computed(() => !!this.app()?.x?.cookieBanner && !this.cookieConsentStatus());
 
   readonly baseApi = baseApi;
   readonly base = base;
   readonly VAPID_PUBLIC_KEY = 'BIRiQCpjtaORtlvwZ7FzFkf8V799iGvEX1kQtO86y-BdiGpAMvXN4UDU1DWEqrpPEAiDDVilG8WKk62NjFc1Opo';
-
-  firstActiveSet: boolean = false;
 
   editMode: boolean = false;
   active = false;
@@ -173,23 +170,13 @@ export class StartComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    
-    // Check if the user already has the cookie set
     this.cookieConsentStatus.set(!!this.getCookie(this.cookieConsentName));
-
     window.localStorage.setItem('noframe', String(this.frameless()));
-
     this.accessToken = this.userService.getToken();
-
-    // might also consider using proxy and $digest$ for any changes
-    // this.appConfig = this.runService.appConfig;
-
-    // 1. Clear previous proxy keys to prevent state leakage
-    // this.appConfig = this.runService.appConfig; 
 
     Reflect.defineProperty(window, '_conf', {
       get: () => this.appConfig,
-      configurable: true // Required so Reflect.deleteProperty can remove it later
+      configurable: true
     });
 
     Reflect.defineProperty(window, '_this_start', {
@@ -197,26 +184,12 @@ export class StartComponent implements OnInit, OnDestroy {
       configurable: true
     });
 
-    // Object.defineProperty(window, '_conf', {
-    //   get: () => this.appConfig,
-    //   configurable: true,   // so you can delete it later 
-    //   // writable: true,
-    // });  
-
-    // Object.defineProperty(window, '_this_start', {
-    //   get: () => this._this,
-    //   configurable: true,   // so you can delete it later 
-    //   // writable: true,
-    // });  
-
-    // Flattened the nested subscriptions using switchMap
     this.userService.getUser().pipe(
       takeUntilDestroyed(this.destroyRef),
       tap((user) => {
         this.user.set(user);
-        this.userService.setUser(user); // Preserving V2 specific setting
+        this.userService.setUser(user);
         this.runService.$user.set(user);
-        // console.log("loaded user", user)
       }),
       switchMap(() => this.route.params)
     ).subscribe((params: Params) => {
@@ -250,20 +223,32 @@ export class StartComponent implements OnInit, OnDestroy {
         takeUntilDestroyed(this.destroyRef)
       )
       .subscribe((event: NavigationEnd) => {
-        // Check if navigated to root
+        this.isPeekExpanded.set(false);
+        // Force the browser to drop focus from the bottom nav!
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
+        this.currentPath.set(event.urlAfterRedirects.split('?')[0]);
+        
         if (this.router.url === '/' || this.router.url === '') {
-          // Wait for app() to be available, or use a fallback
           const startPage = this.app()?.startPage || 'start';
-          // Prevent infinite loop if already at startPage
           if (this.router.url !== `/${startPage}`) {
             this.router.navigate([startPage], {
               relativeTo: this.route,
               queryParams: this.route.snapshot.queryParams,
-              replaceUrl: true // Optional: replaces history entry
+              replaceUrl: true
             });
           }
         }
       });
+  }
+  
+  onBottomNavScroll(event: Event) {
+    const target = event.target as HTMLElement;
+    const index = Math.round(target.scrollLeft / target.clientWidth);
+    if (this.activeBottomNavIndex() !== index) {
+      this.activeBottomNavIndex.set(index);
+    }
   }
 
   getStart(id: number) {
@@ -281,21 +266,12 @@ export class StartComponent implements OnInit, OnDestroy {
     this.pushDismissed.set(true);
   }
 
-  // toggleNav(index: number): void {
-  //   const currentState = this.navToggle();
-  //   this.navToggle.set({ ...currentState, [index]: !currentState[index] });
-  // }
-  toggleNav(index: number) {
+  toggleNav(groupId: number) {
     if (this.app()?.layout === 'topnav') {
-      // Top Nav Mode: Exclusive dropdown behavior (closes others)
-      const isCurrentlyOpen = this.navToggle()[index];
-      this.navToggle.set(isCurrentlyOpen ? {} : { [index]: true });
+      const isCurrentlyOpen = this.navToggle()[groupId];
+      this.navToggle.set(isCurrentlyOpen ? {} : { [groupId]: true });
     } else {
-      // Side Menu Mode: Independent accordion behavior
-      this.navToggle.update(state => ({
-        ...state,
-        [index]: !state[index]
-      }));
+      this.navToggle.update(state => ({ ...state, [groupId]: !state[groupId] }));
     }
   }
 
@@ -348,7 +324,6 @@ export class StartComponent implements OnInit, OnDestroy {
           .subscribe(res => this.pushSub = res);
       })
       .catch(err => { this.pushSubError = { err: err }; console.log(err) });
-
   }
 
   onceDone() {
@@ -373,14 +348,6 @@ export class StartComponent implements OnInit, OnDestroy {
 
   getPath = getPath;
 
-  // getPath() {
-  //   if (window.location.host.indexOf(domainBase) > -1) {
-  //     return 'path:' + window.location.host.match(domainRegex)[1];
-  //   } else {
-  //     return 'domain:' + window.location.hostname;
-  //   }
-  // }
-
   hideSb() {
     setTimeout(() => { this.sidebarActive.set(false) }, 300)
   }
@@ -394,7 +361,6 @@ export class StartComponent implements OnInit, OnDestroy {
           this.app.set(res);
           const currentLang = this.lang() === 'ms' ? 'ms-my' : 'en';
           dayjs.locale(currentLang);
-          // console.log("getAppByPath", this.app());
           this.runService.$app.set(res);
           if (!this.frameless()) {
             this.getNavis(res.id, this.user().email);
@@ -413,14 +379,14 @@ export class StartComponent implements OnInit, OnDestroy {
 
           this.appUrl = location.protocol + '//' + res.appPath + "." + domainBase;
 
-          let url = this.router.url.split('?')[0].replace('/', ''); // utk check nya da /path x kt url. Mn xda, navigate ke startPage or /start
+          let url = this.router.url.split('?')[0].replace('/', ''); 
           if (!url) {
             if (res.startPage) {
               this.router.navigate([res.startPage], 
                 { 
                   relativeTo: this.route, 
                   queryParams: this.route.snapshot.queryParams,
-                  replaceUrl: true // Optional: replaces history entry
+                  replaceUrl: true
                 });
             } else {
               this.router.navigate(['start'], { 
@@ -440,7 +406,6 @@ export class StartComponent implements OnInit, OnDestroy {
           this.appLoading.set(false);
         },
         error: (err) => {
-          // this.validPath.set(false);
           this.appLoading.set(false);
         }
       });
@@ -455,7 +420,6 @@ export class StartComponent implements OnInit, OnDestroy {
           this.app.set(res);
           const currentLang = this.lang() === 'ms' ? 'ms-my' : 'en';
           dayjs.locale(currentLang);
-
           this.runService.$app.set(res);
 
           this.runService.getAppUserByEmail(id, { email: this.user().email })
@@ -476,10 +440,6 @@ export class StartComponent implements OnInit, OnDestroy {
           await this.initScreen(res.f);
           this.appLoading.set(false);
 
-          // this.startPage.set(res.startPage??'start');
-
-          // utk check nya da /path x kt url. Mn xda, navigate ke startPage or /start
-          // utk run dari designer nya xjln, sbb sentiasa da /run/<app-id>
           let url = this.router.url.split('?')[0]
             .replace(this.preurl(), '')
             .replace('/', '');
@@ -504,8 +464,6 @@ export class StartComponent implements OnInit, OnDestroy {
             .subscribe(res => {
               this.mailboxBadge.set(res);
           });
-
-
         },
         error: (err) => this.appLoading.set(false)
       })
@@ -541,7 +499,6 @@ export class StartComponent implements OnInit, OnDestroy {
 
   toggleDark() {
     this.darkMode.set(!this.darkMode);
-    // localStorage.setItem("darkMode",this.darkMode+"");
   }
 
   preCheck(f) {
@@ -549,7 +506,7 @@ export class StartComponent implements OnInit, OnDestroy {
     try {
       if (f.pre) {
         let pre = f.pre.trim();
-        res = this._pre(pre);//new Function('$', '$prev$', '$user$', 'return ' + f.pre)(this.entry.data, this.entry && this.entry.prev, this.user);
+        res = this._pre(pre);
       }
     } catch (e) { this.logService.log(`{start-${f?.code}-precheck}-${e.message}`) }
     return !f.pre || res;
@@ -558,16 +515,16 @@ export class StartComponent implements OnInit, OnDestroy {
   runPre(): void {
     const updatedPreGroup = { ...this.preGroup() };
     const updatedPreItem = { ...this.preItem() };
-    const updatedNavToggle = {};
+    const updatedNavToggle = { ...this.navToggle() }; 
+    const isEmpty = Object.keys(updatedNavToggle).length === 0;
+    let firstActiveSet = !isEmpty;
 
-    let firstActiveSet = false;
-
-    this.navis()?.forEach((group, index) => {
+    this.navis()?.forEach((group) => {
       updatedPreGroup[group.id] = this.preCheck(group);
 
-      if (!firstActiveSet && updatedPreGroup[group.id]) {
+      if (!firstActiveSet && updatedPreGroup[group.id] && group.x?.type !== 'bottom') {
         firstActiveSet = true;
-        updatedNavToggle[index] = true;
+        updatedNavToggle[group.id] = true;
       }
 
       group.items?.forEach((item) => {
@@ -601,7 +558,6 @@ export class StartComponent implements OnInit, OnDestroy {
   }
 
   getEvalContext = (isPassive: boolean = false, additionalParams: any = {}) => {
-    // Properties shared across ALL evaluations
     const passive = {
       $app$: this.app(),
       $user$: this.user(),
@@ -618,7 +574,6 @@ export class StartComponent implements OnInit, OnDestroy {
 
     if (isPassive) return passive;
 
-    // Properties only needed for active evaluation (_eval)
     return {
       ...passive,
       setTimeout: this._setTimeout,
@@ -676,7 +631,7 @@ export class StartComponent implements OnInit, OnDestroy {
     let res = undefined;
     let jsTxt = this.compileTpl(js, { $param$: this.$param$, $this$: this._this, $user$: this.user(), $conf$: this.appConfig, $base$: base, $baseUrl$: this.baseUrl(), $baseApi$: baseApi })
     try {
-      res = await this._eval(jsTxt);// new Function('$', '$prev$', '$user$', '$http$', 'return ' + f)(this.entry.data, this.entry && this.entry.prev, this.user, this.httpGet);
+      res = await this._eval(jsTxt);
     } catch (e) { this.logService.log(`{start-${this.app().title}-initNavi}-${e.message}`) }
     this.runPre();
     return res;
@@ -750,7 +705,6 @@ export class StartComponent implements OnInit, OnDestroy {
     this.intervalList.push(intervalId);
   }
 
-
   
   // --- Cookie Management Methods ---
   private getCookie(name: string): string | null {
@@ -780,29 +734,23 @@ export class StartComponent implements OnInit, OnDestroy {
     this.cookieConsentStatus.set(true);
   }
 
-  // Closes the banner without setting a cookie (it will reappear on next refresh)
   dismissCookies() {
     this.cookieConsentStatus.set(true); 
   }
-
-
-
 
   dismissAllModal() {
     this.modalService.dismissAll('');
   }
 
   ngOnDestroy() {
-    Object.keys(this.liveSubscription()).forEach(key => this.liveSubscription()[key].unsubscribe());//.forEach(sub => sub.unsubscribe());
+    Object.keys(this.liveSubscription()).forEach(key => this.liveSubscription()[key].unsubscribe());
     this.intervalList.forEach(i => clearInterval(i));
     this.timeoutList.forEach(i => clearTimeout(i));
 
     this.runService.appConfig = {};
-    // Global cleanup
     const confDeleted = Reflect.deleteProperty(window, '_conf');
     const thisStartDeleted = Reflect.deleteProperty(window, '_this_start');
 
-    // Fallback if browser/scope constraints prevent property deletion
     if (!confDeleted) (window as any)._conf = undefined;
     if (!thisStartDeleted) (window as any)._this_start = undefined;
 
