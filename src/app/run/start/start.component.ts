@@ -522,7 +522,7 @@ export class StartComponent implements OnInit, OnDestroy {
     this.navis()?.forEach((group) => {
       updatedPreGroup[group.id] = this.preCheck(group);
 
-      if (!firstActiveSet && updatedPreGroup[group.id] && group.x?.type !== 'bottom') {
+      if (!firstActiveSet && updatedPreGroup[group.id]) { // && group.x?.type !== 'bottom'
         firstActiveSet = true;
         updatedNavToggle[group.id] = true;
       }
