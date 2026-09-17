@@ -1,6 +1,6 @@
 <ng-template #statusScreen let-msg="msg">
   <div class="d-flex justify-content-center align-items-center flex-column wrapper" style="height:100%; text-align: center;">
-    <div class="p-3 text-muted">
+    <div class="p-3 text-secondary">
       <h4>{{ msg }}</h4>
     </div>
     <button type="button" class="btn btn-round btn-secondary" (click)="logout()">
@@ -315,11 +315,11 @@
         }
         <div class="wrapper-in text-center">
           @if (!app()?.live) {
-            <div class="text-muted text-center my-3">
+            <div class="text-secondary text-center my-3">
               <h4><fa-icon [icon]="['fas','exclamation-triangle']" [fixedWidth]="true"></fa-icon> {{app()?.title}} is currently under maintenance.</h4>
             </div>
           } @else {
-            <div class="text-muted text-center my-3">
+            <div class="text-secondary text-center my-3">
               <h4><fa-icon [icon]="['fas','exclamation-triangle']" [fixedWidth]="true"></fa-icon> {{app()?.title}} is live at</h4>
               <a class="btn btn-primary mt-3" [href]="appUrl">{{appUrl}}</a>
             </div>
