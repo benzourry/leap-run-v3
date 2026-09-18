@@ -85,6 +85,12 @@ export class AppComponent implements OnInit {
     document.querySelector('#manifest-placeholder').setAttribute('href', `${baseApi}/app/${this.path()}/manifest.json`);
     document.querySelector('#favicon-placeholder').setAttribute('href', `${baseApi}/app/${this.path()}/logo/16`);
 
+    
+    if (window.self !== window.top) {
+      document.documentElement.classList.add('is-embedded');
+      document.body.classList.add('is-embedded');
+    }
+
   }
 
   checkPath(p: string) {
