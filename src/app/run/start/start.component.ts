@@ -244,21 +244,21 @@ export class StartComponent implements OnInit, OnDestroy {
   }
 
   
-  touchStartY:number = 0;
+  // touchStartY:number = 0;
 
-  onBottomSwipeStart(event: TouchEvent){
-    this.touchStartY = event.changedTouches[0].screenY;
-  }
+  // onBottomSwipeStart(event: TouchEvent){
+  //   this.touchStartY = event.changedTouches[0].screenY;
+  // }
 
-  onBottomSwipeEnd(event: TouchEvent, panel: HTMLElement){
-    const touchEndY = event.changedTouches[0].screenY;
-    const swipeDistance = this.touchStartY - touchEndY;
-    if (swipeDistance>20){
-      panel.focus()
-    }else if(swipeDistance<-20){
-      panel.blur()
-    }
-  }
+  // onBottomSwipeEnd(event: TouchEvent, panel: HTMLElement){
+  //   const touchEndY = event.changedTouches[0].screenY;
+  //   const swipeDistance = this.touchStartY - touchEndY;
+  //   if (swipeDistance>20){
+  //     panel.focus()
+  //   }else if(swipeDistance<-20){
+  //     panel.blur()
+  //   }
+  // }
   
   onBottomNavScroll(event: Event) {
     const target = event.target as HTMLElement;
