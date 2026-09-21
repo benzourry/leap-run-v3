@@ -226,7 +226,7 @@ export class ListComponent implements OnInit, OnDestroy {
     this.mediaQueryListener = (e: MediaQueryListEvent) => {
       this.isMobile.set(e.matches);
     };
-
+    
     this.utilityService
       .testOnline$()
       .pipe(takeUntilDestroyed())
@@ -447,12 +447,10 @@ export class ListComponent implements OnInit, OnDestroy {
           
           if (this.lastResStr === currentResStr) {
             this.itemLoading.set(false);
-            // console.log("b4 break")
             return; // Break the infinite loop! Data is identical.
           }
           this.lastResStr = currentResStr;
           // --- FIX END ---
-    // console.log("entryList>>>:",this.dataset())
 
           const content = res.content || [];
 
