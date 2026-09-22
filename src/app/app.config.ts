@@ -1,5 +1,5 @@
 import { ApplicationConfig, provideZoneChangeDetection, isDevMode, importProvidersFrom, provideZonelessChangeDetection, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideRouter, withHashLocation } from '@angular/router';
+import { provideRouter, withHashLocation, withViewTransitions } from '@angular/router';
 
 import { routes } from './app.routes';
 import { provideServiceWorker } from '@angular/service-worker';
@@ -14,7 +14,7 @@ export const appConfig: ApplicationConfig = {
         // provideZoneChangeDetection({ eventCoalescing: true }), 
         provideZonelessChangeDetection(),
         provideBrowserGlobalErrorListeners(),
-        provideRouter(routes, withHashLocation()), 
+        provideRouter(routes, withHashLocation(),withViewTransitions()), 
         provideServiceWorker('ngsw-worker.js', {
           enabled: !isDevMode(),
           registrationStrategy: 'registerWhenStable:30000'
