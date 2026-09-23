@@ -18,7 +18,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, inject, OnDestroy, OnInit, signal, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UserService } from '../../_shared/service/user.service';
-import { ActivatedRoute, NavigationEnd, Params, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { ActivatedRoute, NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Params, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { UtilityService } from '../../_shared/service/utility.service';
 import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PlatformLocation, NgClass, NgStyle } from '@angular/common';
@@ -148,6 +148,8 @@ export class StartComponent implements OnInit, OnDestroy {
   pushSubError: any;
   appUrl: string = '';
 
+  isRouting = signal<boolean>(false);
+
   _this = createProxy({}, () => this.cdr.markForCheck());
 
   constructor() {
@@ -218,29 +220,66 @@ export class StartComponent implements OnInit, OnDestroy {
       });
 
     this.router.events
-      .pipe(
-        filter(event => event instanceof NavigationEnd),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe((event: NavigationEnd) => {
-        this.isPeekExpanded.set(false);
-        // Force the browser to drop focus from the bottom nav!
-        if (document.activeElement instanceof HTMLElement) {
-          document.activeElement.blur();
-        }
-        this.currentPath.set(event.urlAfterRedirects.split('?')[0]);
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((event) => {
         
-        if (this.router.url === '/' || this.router.url === '') {
-          const startPage = this.app()?.startPage || 'start';
-          if (this.router.url !== `/${startPage}`) {
-            this.router.navigate([startPage], {
-              relativeTo: this.route,
-              queryParams: this.route.snapshot.queryParams,
-              replaceUrl: true
-            });
+        // --- View Transitions CSS Toggling ---
+        if (event instanceof NavigationStart) {
+          this.isRouting.set(true);
+        } else if (
+          event instanceof NavigationEnd || 
+          event instanceof NavigationCancel || 
+          event instanceof NavigationError
+        ) {
+          // Delay dropping the class until the CSS animation completes
+          setTimeout(() => this.isRouting.set(false), 400); 
+        }
+
+        // --- Standard Routing Logic ---
+        if (event instanceof NavigationEnd) {
+          this.isPeekExpanded.set(false);
+          // Force the browser to drop focus from the bottom nav!
+          if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+          }
+          this.currentPath.set(event.urlAfterRedirects.split('?')[0]);
+          if (this.router.url === '/' || this.router.url === '') {
+            const startPage = this.app()?.startPage || 'start';
+            if (this.router.url !== `/${startPage}`) {
+              this.router.navigate([startPage], {
+                relativeTo: this.route,
+                queryParams: this.route.snapshot.queryParams,
+                replaceUrl: true
+              });
+            }
           }
         }
       });
+
+    // this.router.events
+    //   .pipe(
+    //     filter(event => event instanceof NavigationEnd),
+    //     takeUntilDestroyed(this.destroyRef)
+    //   )
+    //   .subscribe((event: NavigationEnd) => {
+    //     this.isPeekExpanded.set(false);
+    //     // Force the browser to drop focus from the bottom nav!
+    //     if (document.activeElement instanceof HTMLElement) {
+    //       document.activeElement.blur();
+    //     }
+    //     this.currentPath.set(event.urlAfterRedirects.split('?')[0]);
+        
+    //     if (this.router.url === '/' || this.router.url === '') {
+    //       const startPage = this.app()?.startPage || 'start';
+    //       if (this.router.url !== `/${startPage}`) {
+    //         this.router.navigate([startPage], {
+    //           relativeTo: this.route,
+    //           queryParams: this.route.snapshot.queryParams,
+    //           replaceUrl: true
+    //         });
+    //       }
+    //     }
+    //   });
   }
 
   
@@ -490,6 +529,18 @@ export class StartComponent implements OnInit, OnDestroy {
     this.runService.getNavis(id, email)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(res => {
+
+        // Pre-compile URLs once here!
+        const context = { $this$: this._this, $user$: this.user(), $conf$: this.appConfig, $base$: this.base, $baseUrl$: this.baseUrl(), $baseApi$: this.baseApi };
+        
+        res.forEach((n: any) => {
+          n.items.forEach((i: any) => {
+            if (['external', 'internal'].includes(i.type)) {
+              i.compiledUrl = this.compileTpl(i.url, context);
+            }
+          });
+        });
+
         this.navis.set(res);
         this.runService.$navis.set(res);
         this.runPre();
