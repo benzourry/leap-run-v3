@@ -99,7 +99,7 @@
                             [ngModel]="checkAllInput()" (click)="checkAllEntry(checkAll.checked)">
                         </th>
                       }
-                      <th class="ds-index" style="width: 1%">#</th>
+                      <!-- <th class="ds-index" style="width: 1%">#</th> -->
                       @if (!lookup()?.x?.codeHidden){
                         <th class="w-10">{{lookup()?.x?.codeLbl||'CODE'}}</th>
                       }
@@ -119,7 +119,7 @@
                       @for (dummy of [1,2,3,4,5,6]; track dummy) {
                         <tr class="ds-row bg-body-tertiary bg-opacity-10">
                           @if(lookup().sourceType=='db') { <td class="ds-check"><span class="placeholder col-12 rounded"></span></td> }
-                          <td data-label="#" class="bg-secondary text-white ds-index"><span class="placeholder col-12 rounded"></span></td>
+                          <!-- <td data-label="#" class="bg-secondary text-white ds-index"><span class="placeholder col-12 rounded"></span></td> -->
                           @if (!lookup()?.x?.codeHidden){
                             <td class="ds-item" [attr.data-label]="lookup()?.x?.codeLbl||'CODE'">
                               <span class="placeholder rounded" [ngClass]="'col-' + (4 + ((dummy + $index) % 4))"></span>
@@ -156,9 +156,9 @@
                             </td>
                           }
 
-                          <td data-label="#" class="bg-secondary text-white ds-index">
+                          <!-- <td data-label="#" class="bg-secondary text-white ds-index">
                             {{preCount() + eIdx + 1}}
-                          </td>
+                          </td> -->
 
                           @if (!lookup().x?.codeHidden){
                             <td class="ds-item" [attr.data-label]="lookup()?.x?.codeLbl||'CODE'">@if(entry.code){ {{entry.code}} }@else{<span class="text-body-tertiary fst-italic">Not available</span>}</td>
