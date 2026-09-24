@@ -225,6 +225,7 @@ export class StartComponent implements OnInit, OnDestroy {
         
         // --- View Transitions CSS Toggling ---
         if (event instanceof NavigationStart) {
+          document.body.classList.add('vt-safe-mode');
           this.isRouting.set(true);
         } else if (
           event instanceof NavigationEnd || 
