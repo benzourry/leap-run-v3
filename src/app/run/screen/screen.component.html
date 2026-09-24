@@ -3,7 +3,7 @@
     [class.as-comp]="asComp()"
     [class.map-fullscreen]="screen()?.data?.fullscreen" 
     [class.full-viewport-page]="['chatbot'].includes(screen()?.type)"
-    appPullToRefresh (onRefresh)="reloadScreenConfig()">
+    appPullToRefresh [pullDisabled]="asComp()" (onRefresh)="reloadScreenConfig()">
     
     @if (!screen()?.data?.hideTitle && !hideTitle()) {
       @let tplContext = {

@@ -1,4 +1,4 @@
-import { Directive, ElementRef, HostListener, output } from '@angular/core';
+import { Directive, ElementRef, HostListener, input, output } from '@angular/core';
 
 @Directive({
   selector: '[appPullToRefresh]',
@@ -6,6 +6,7 @@ import { Directive, ElementRef, HostListener, output } from '@angular/core';
 })
 export class PullToRefreshDirective {
   onRefresh = output<void>();
+  pullDisabled = input<boolean>(false); // 👈 Added input flag
 
   private startY = -1;
   private isPulling = false;
@@ -19,12 +20,13 @@ export class PullToRefreshDirective {
 
   @HostListener('touchstart', ['$event'])
   onTouchStart(e: TouchEvent) {
+    if (this.pullDisabled()) return; // 👈 Skip if disabled
     this.startY = this.isScrolled(e.target as HTMLElement) ? -1 : e.touches[0].clientY;
   }
 
   @HostListener('touchmove', ['$event'])
   onTouchMove(e: TouchEvent) {
-    if (this.startY < 0) return;
+    if (this.pullDisabled() || this.startY < 0) return; // 👈 Skip if disabled
 
     const dist = e.touches[0].clientY - this.startY;
 
@@ -53,6 +55,7 @@ export class PullToRefreshDirective {
   @HostListener('touchend')
   @HostListener('touchcancel')
   onTouchEnd() {
+    if (this.pullDisabled()) return;
     this.startY = -1;
     this.clearTimer();
     if (this.isPulling) this.resetUI();
