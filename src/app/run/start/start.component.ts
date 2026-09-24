@@ -233,7 +233,7 @@ export class StartComponent implements OnInit, OnDestroy {
           event instanceof NavigationError
         ) {
           // Delay dropping the class until the CSS animation completes
-          setTimeout(() => this.isRouting.set(false), 400); 
+          setTimeout(() => this.isRouting.set(false), 300); 
         }
 
         // --- Standard Routing Logic ---
@@ -406,7 +406,7 @@ export class StartComponent implements OnInit, OnDestroy {
   getPath = getPath;
 
   hideSb() {
-    setTimeout(() => { this.sidebarActive.set(false) }, 300)
+    setTimeout(() => { this.sidebarActive.set(false) }, 0)
   }
   
   getAppByPath(path) {
