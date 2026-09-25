@@ -46,7 +46,7 @@
               },
               {
                 "glob": "**/*",
-                "input": "./src/assets/icons_lda",
+                "input": "./src/assets/icons_reka",
                 "output": "./assets/icons/"
               }
             ],
