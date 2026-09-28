@@ -589,6 +589,8 @@ export class ListComponent implements OnInit, OnDestroy {
     history.pushState(null, '', window.location.href);
     this.modalService.open(content, { backdrop: 'static', size: 'lg' })
       .result.then(() => this.getEntryList(this.pageNumber(), this.sort()), () => {});
+
+    this.cdr.detectChanges();
   }
 
   runAction(url: string, inpop: boolean, content: any, entryId: any, formId: any, type: string, facet: string, params: any) {
@@ -609,6 +611,7 @@ export class ListComponent implements OnInit, OnDestroy {
     this.actionTitle.set(title);
     history.pushState(null, '', window.location.href);
     this.modalService.open(content, { backdrop: 'static', size: 'lg', windowClass: 'browser-window' }).result.then(() => {}, () => {});
+    this.cdr.detectChanges();
   }
 
   cancelEntry(id: number) {
@@ -686,6 +689,7 @@ export class ListComponent implements OnInit, OnDestroy {
     history.pushState(null, '', window.location.href);
     this.modalService.open(content, { backdrop: 'static' })
       .result.then(res => { this.filtersData.set({ ...res }); this.getEntryList(1); }, () => {});
+    this.cdr.detectChanges();
   }
 
   filterIsEmpty = computed(() => {
@@ -816,6 +820,7 @@ export class ListComponent implements OnInit, OnDestroy {
     history.pushState(null, '', window.location.href);
     this.modalService.open(content, { backdrop: 'static', size: 'lg' })
       .result.then(res => this.blastList(res, Object.keys(this.selectedEntries()).map(Number)), () => {});
+    this.cdr.detectChanges();
   }
 
   resyncDataset(dsId: number) {
@@ -973,7 +978,7 @@ export class ListComponent implements OnInit, OnDestroy {
   //     this.deleteEntry(i.id);
   //   }
   // }
-
+  
   executeRowAction(ac: any, i: any, inPopTpl: any, openUrlTpl: any) {
     if (this.isActionOfflineDisabled(ac.action)) return;
 
