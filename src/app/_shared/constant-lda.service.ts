@@ -23,7 +23,7 @@ var full = location.protocol + '//' + location.hostname + (location.port ? ':' +
 export const baseApi = 'https://io.lda-app.marine.gov.my/api';   // prefer
 export const base = 'https://io.lda-app.marine.gov.my'; // prefer
 
-export const domainRegex = /(?:http[s]*\:\/\/)*(.*?)\.(?=[^\/]*\.)?alpha\.moh\.gov\.my/;
+export const domainRegex = /(?:http[s]*\:\/\/)*(.*?)\.(?=[^\/]*\.)?lda-app\.marine\.gov\.my/;
 export const domainBase = "lda-app.marine.gov.my"; 
 export const OAUTH = {
         AUTH_URI : "https://io.lda-app.marine.gov.my/oauth2/authorize",
