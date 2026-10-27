@@ -46,7 +46,8 @@ import {
     faUserGraduate,
     faUserTie,
     faShield,
-    faFastBackward
+    faFastBackward,
+    faFolderPlus
 } from '@fortawesome/free-solid-svg-icons';
 
 // --- REGULAR (OUTLINE) ICONS ---
@@ -140,7 +141,7 @@ export class SharedModule {
 
             // --- BRAND ICONS ---
             faFacebookF, faGithub, faGoogle, faInstagram, faLinkedin, faMicrosoft, faTwitter, faUncharted, faWpforms, faWhatsapp, faYoutube,
-            faShield, faFastBackward,
+            faShield, faFastBackward, faFolderPlus
         ];
 
         // library.addIconPacks(fas);
