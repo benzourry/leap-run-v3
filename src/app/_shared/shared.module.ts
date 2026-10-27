@@ -47,7 +47,9 @@ import {
     faUserTie,
     faShield,
     faFastBackward,
-    faFolderPlus
+    faFolderPlus,
+    faCube,
+    faBoxOpen
 } from '@fortawesome/free-solid-svg-icons';
 
 // --- REGULAR (OUTLINE) ICONS ---
@@ -81,8 +83,7 @@ import {
     faStar as farStar,
     faThumbsUp,
     faUser,
-    faCamera,
-    faPaste
+    faCamera, faPaste
 } from '@fortawesome/free-regular-svg-icons';
 
 // --- BRAND ICONS ---
@@ -90,8 +91,8 @@ import {
     faFacebookF, faGithub, faGoogle, faInstagram, faLinkedin, faMicrosoft, faTwitter, faUncharted, faWhatsapp, faWpforms, faYoutube
 } from '@fortawesome/free-brands-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
-import { rxStompServiceFactory } from './service/rx-stomp-service-factory';
 import { RxStompService } from './service/rx-stomp.service';
+import { rxStompServiceFactory } from './service/rx-stomp-service-factory';
 
 // ### DI PAKE n REFERENCE DLM main.ts
 
@@ -106,7 +107,8 @@ import { RxStompService } from './service/rx-stomp.service';
 })
 export class SharedModule {
     constructor(faLibrary: FaIconLibrary) {
-        
+
+        // 1. Put all your imported icons into a single array
         const myIcons = [
             // --- SOLID ICONS ---
             faAddressBook, faAlignCenter, faAlignJustify, faAlignLeft, faAlignRight,
@@ -141,12 +143,14 @@ export class SharedModule {
 
             // --- BRAND ICONS ---
             faFacebookF, faGithub, faGoogle, faInstagram, faLinkedin, faMicrosoft, faTwitter, faUncharted, faWpforms, faWhatsapp, faYoutube,
-            faShield, faFastBackward, faFolderPlus
+
+            // Add more icons as needed
+            faShield, faFastBackward, faFolderPlus, faCube, faBoxOpen
         ];
 
         // library.addIconPacks(fas);
         faLibrary.addIcons(...myIcons);
-        
+
         library.add(...myIcons);
     }
 }
