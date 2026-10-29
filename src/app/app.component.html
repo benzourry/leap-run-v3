@@ -8,16 +8,18 @@
     </div>
   </div>
 }@else{
-  @if (updateAvailable()) {
-    <div style="background:red;padding:1em; color: white; font-size: .9em" (click)="reload()">
-      Update available! Click this message to update
-    </div>
-  }
-  @if (offline()) {
-    <div style="background:red;padding:1em; color: white; font-size: .9em">
-      You are currently offline. Data might be outdated and some of the feature will be disabled.
-    </div>
-  }
+  <div class="fixed-bottom w-100" style="z-index: 1050;">
+    @if (updateAvailable()) {
+      <div style="background:red;padding:1em; color: white; font-size: .9em" (click)="reload()">
+        Update available! Click this message to update
+      </div>
+    }
+    @if (offline()) {
+      <div style="background:red;padding:1em; color: white; font-size: .9em">
+        You are currently offline. Data might be outdated and some of the feature will be disabled.
+      </div>
+    }
+  </div>
   @if (!serverDown()) {
     @if (!pathExist()) {
       <div class="text-center">
