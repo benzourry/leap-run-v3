@@ -41,7 +41,7 @@ jobs:
           username: ${{ secrets.SFTP_USER_LEAP }}
           key: ${{ secrets.SFTP_PRIVATE_KEY }}
           script: |
-            rm -rf /var/www/html/run/*
+            sudo rm -rf /var/www/html/run/*
 
       - name: Upload to LEAP server via SFTP
         uses: appleboy/scp-action@master
@@ -61,4 +61,4 @@ jobs:
           key: ${{ secrets.SFTP_PRIVATE_KEY }}
           script: |
             chmod -R 755 /var/www/html/run
-            chown -R leap:psacln /var/www/html/run
+            chown -R www-data:www-data /var/www/html/run
