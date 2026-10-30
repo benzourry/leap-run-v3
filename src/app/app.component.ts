@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with LEAP.  If not, see <http://www.gnu.org/licenses/>.
 
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 // import { PushService } from './_shared/service/push.service';
 // import { RunService } from './service/run.service';
@@ -38,7 +38,7 @@ import { ThemeService } from './_shared/service/theme.service';
     styleUrls: ['./app.component.scss'],
     imports: [RouterOutlet, ToastsContainer, FaIconComponent]
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
 
   private runService = inject(RunService)
   private swUpdate = inject(SwUpdate)
@@ -90,6 +90,8 @@ export class AppComponent implements OnInit {
       document.documentElement.classList.add('is-embedded');
       document.body.classList.add('is-embedded');
     }
+    
+    document.addEventListener('click', this.globalClickListener, { passive: true, capture: true });
 
   }
 
@@ -113,5 +115,31 @@ export class AppComponent implements OnInit {
   reload() {
     window.location.reload();
   }
+  
+  ngOnDestroy() {
+    // 2. Clean up to prevent memory leaks
+    document.removeEventListener('click', this.globalClickListener, { capture: true });
+  }
+
+  // Create an arrow function so 'this' context is preserved if needed,
+  // and so we can remove the exact same listener on destroy.
+  private globalClickListener = (event: MouseEvent) => {
+    const target = event.target as HTMLElement;
+    if (!target) return;
+
+    const rect = target.getBoundingClientRect();
+    
+    // Only calculate if the click was on an actual visible element
+    if (rect.width === 0 || rect.height === 0) return;
+
+    const elCenterX = rect.left + (rect.width / 2);
+    const elCenterY = rect.top + (rect.height / 2);
+
+    const x = Math.round((elCenterX / window.innerWidth) * 100);
+    const y = Math.round((elCenterY / window.innerHeight) * 100);
+    
+    document.documentElement.style.setProperty('--click-x', `${x}%`);
+    document.documentElement.style.setProperty('--click-y', `${y}%`);
+  };
 
 }
